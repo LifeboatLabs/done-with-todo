@@ -7,7 +7,7 @@
 window.DWTD_CONFIG = {
 
   // Microsoft Entra -> App registrations -> Done With To Do -> "Application (client) ID"
-  microsoftClientId: "PASTE-YOUR-MICROSOFT-CLIENT-ID-HERE",
+  microsoftClientId: "8f748ea4-dc22-4e4d-a90d-c68aca9c4798",
 
   // Google Cloud -> Google Auth Platform -> Clients -> your web client -> "Client ID"
   // Leave as it is to launch without Google Tasks; the button will say "Coming soon".
