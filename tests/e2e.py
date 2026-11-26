@@ -195,7 +195,7 @@ with sync_playwright() as p:
     check('A setup box shows the exact site address', page.text_content('#setup-address') == BASE, page.text_content('#setup-address'))
     check('A setup box shows the origin', page.text_content('#setup-origin') == BASE.rstrip('/'))
     check('A sign-in disabled until configured', page.is_disabled('#signin-ms'))
-    check('A Google shows Coming soon when not configured', page.text_content('#dest-google-state') == 'Coming soon')
+    check('A Google Tasks stays hidden when not configured', page.is_hidden('#dir-google') and 'Google' not in page.text_content('#start-text'))
     page.screenshot(path=os.path.join(SHOTS, 'a-start-setup.png'), full_page=True)
     page.click('#try-demo')
     page.wait_for_selector('#view-overview:not([hidden])')
@@ -245,6 +245,7 @@ with sync_playwright() as p:
     check('B setup box hidden once configured', page.is_hidden('#setup'))
     check('B header shows source and tip links', page.is_visible('#header-source') and page.is_visible('#header-donate'))
     page.screenshot(path=os.path.join(SHOTS, 'b-start-configured.png'), full_page=False)
+    check('B with Google switched on, the start page offers Google Tasks', page.is_visible('#dir-google') and 'Google Tasks' in page.text_content('#start-text') and page.text_content('#route-save strong') == 'Save or move')
     page.click('#signin-ms')
     page.wait_for_selector('#view-overview:not([hidden])', timeout=20000)
     check('B URL cleaned after sign-in', '#' not in page.url and 'code=' not in page.url, page.url)
@@ -252,6 +253,7 @@ with sync_playwright() as p:
     check('B all 124 tasks read across pages', 'with 124 tasks' in page.text_content('#ov-summary'), page.text_content('#ov-summary'))
     check('B list ids URL-encoded for Graph', any('/lists/L2%2Fx/tasks' in c for c in graph_log), [c for c in graph_log if 'L2' in c][:2])
     check('B Google button counts lists', page.text_content('#google-move') == 'Move 2 lists to Google Tasks', page.text_content('#google-move'))
+    check('B with Google on, lists can be picked', page.is_visible('#ov-pick-actions') and page.is_visible('#ov-table .cell-check'))
     page.screenshot(path=os.path.join(SHOTS, 'b-overview.png'), full_page=True)
     # backup with a real attachment download
     with page.expect_download() as dl:
@@ -315,7 +317,7 @@ with sync_playwright() as p:
     ctx.route(CONFIG_URL, lambda r, q: r.fulfill(status=200, content_type='application/javascript', body=GATED))
     page = ctx.new_page()
     page.goto(BASE + '?demo'); page.wait_for_selector('#view-overview:not([hidden])')
-    check('E Google hidden from the public while googleForEveryone is false', not page.is_visible('#google-move') and 'Coming soon' in page.text_content('#google-status'))
+    check('E Google hidden from the public while googleForEveryone is false', page.is_hidden('#dest-google-card') and page.is_hidden('#ov-pick-actions') and page.is_hidden('#ov-table .cell-check'))
     page.goto(BASE + '?demo&testers'); page.wait_for_selector('#view-overview:not([hidden])')
     check('E testers see Google', page.is_visible('#google-move'))
     page.goto(BASE + '?demo'); page.wait_for_selector('#view-overview:not([hidden])')

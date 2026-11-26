@@ -205,6 +205,8 @@ input[type="checkbox"] { width: 1.2rem; height: 1.2rem; accent-color: var(--gree
 .tag-moved { color: var(--green-deep); background: var(--green-tint); }
 
 .destinations { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 2.5rem; }
+.destinations-single { grid-template-columns: minmax(0, 40rem); }
+.lists.no-pick .cell-check, .lists.no-pick thead th:first-child { display: none; }
 .dest { border: 1px solid var(--line); border-top: 8px solid var(--green); border-radius: 8px; padding: 1.5rem; display: flex; flex-direction: column; }
 .dest p { margin: 0.25rem 0 0.75rem; }
 .dest .actions { margin: 0.5rem 0 0.25rem; }

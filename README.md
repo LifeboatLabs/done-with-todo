@@ -14,7 +14,7 @@ Done With To Do is a free web page that copies your Microsoft To Do lists into G
 2. **Choose your lists.** You see every list and task it found.
 3. **Save or move them.**
     - **Full backup (.zip):** a spreadsheet (CSV), a printable page, Markdown files for Obsidian (Tasks plugin format), calendar files (.ics) for Thunderbird, Nextcloud, Tasks.org and others, a JSON file with everything, and the files attached to your tasks.
-    - **Google Tasks:** each list becomes a Google Tasks list. Steps become subtasks, and notes, due dates and completed tasks come too. This opens to everyone once Google finishes reviewing the app; until then the page says "Coming soon".
+    - **Google Tasks:** each list becomes a Google Tasks list. Steps become subtasks, and notes, due dates and completed tasks come too. This opens to everyone once Google finishes reviewing the app; until then it stays hidden, so the page only shows what works today.
 
 ## What moves where
 

@@ -145,7 +145,7 @@
     }[ms];
     var gText = {
       ok: 'Google client ID: set. Moving to Google Tasks is ready to test.',
-      missing: 'Google client ID: not set yet. Until it is, visitors see "Coming soon" for Google Tasks (setup guide, Step 3).',
+      missing: 'Google client ID: not set yet. Until it is, Google Tasks stays hidden from visitors (setup guide, Step 3).',
       swapped: 'Google client ID: this looks like the Microsoft ID. Swap the two values in config.js.',
       bad: 'Google client ID: this doesn’t look right. It should end in .apps.googleusercontent.com.'
     }[g];
@@ -174,9 +174,14 @@
       document.querySelectorAll('.donate-sentence').forEach(function (n) { n.hidden = false; });
       document.querySelectorAll('.donate-link').forEach(function (a) { a.href = tip; a.target = '_blank'; a.rel = 'noopener'; });
     }
-    if (!gOk) {
-      $('dest-google-state').textContent = 'Coming soon';
-      $('dest-google-state').closest('.direction').classList.add('direction-unavailable');
+    // Google Tasks stays out of sight until Google approves the app (or for testers).
+    if (gOk) {
+      $('dir-google').hidden = false;
+      $('trust-google').hidden = false;
+      $('faq-google').hidden = false;
+      $('start-text').textContent = 'Move them to Google Tasks, or save a full backup you can open anywhere. It\u2019s free and open source, and it all happens in your browser.';
+      $('route-save').querySelector('strong').textContent = 'Save or move';
+      $('route-save').querySelector('span').textContent = 'Download a backup, or copy your lists into Google Tasks.';
     }
   }
 
@@ -298,10 +303,13 @@
     if (hasFiles) $('opt-attachments-label').textContent = 'Include ' + plural(s.attachments, 'attached file') + ' (' + formatBytes(s.attachmentBytes) + ')';
 
     var gBtn = $('google-move');
-    if (!gOk) {
-      $('google-title').closest('.dest').classList.add('dest-unavailable');
-      $('google-status').textContent = 'Coming soon to this site. Save a backup now and you’ll be ready.';
-    } else if (!state.google) {
+    // Without Google Tasks there's nothing to pick lists for: the backup always has every list.
+    $('dest-google-card').hidden = !gOk;
+    $('destinations').classList.toggle('destinations-single', !gOk);
+    $('ov-pick-actions').hidden = !gOk;
+    $('ov-pick-note').hidden = !gOk;
+    $('ov-table').classList.toggle('no-pick', !gOk);
+    if (gOk && !state.google) {
       state.google = new GoogleClient({ clientId: gId });
       state.google.prepare().catch(function (e) { $('google-status').textContent = e.message; $('google-status').classList.add('status-error'); });
     }

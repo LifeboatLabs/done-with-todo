@@ -6,25 +6,25 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; font-src 'self'; img-src 'self' data: blob:; connect-src https://login.microsoftonline.com https://graph.microsoft.com https://tasks.googleapis.com https://accounts.google.com/gsi/ https://oauth2.googleapis.com; frame-src https://accounts.google.com/gsi/; base-uri 'none'; form-action 'none'; object-src 'none'">
   <meta name="color-scheme" content="light">
   <title>Done With To Do: take your Microsoft To Do lists with you</title>
-  <meta name="description" content="Microsoft To Do shuts down on June 30, 2027. Move your lists to Google Tasks or save a full backup. Free, open source, and it all happens in your browser.">
+  <meta name="description" content="Microsoft To Do shuts down on June 30, 2027. Save a full backup of every list, task, step and note: a spreadsheet, a printable page, Markdown and calendar files. Free, open source, and it all happens in your browser.">
   <meta property="og:title" content="Done With To Do">
-  <meta property="og:description" content="Microsoft To Do shuts down on June 30, 2027. Move your lists to Google Tasks or save a full backup. Free and open source.">
+  <meta property="og:description" content="Microsoft To Do shuts down on June 30, 2027. Back up every list, task and note before it goes. Free and open source.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://lifeboatlabs.github.io/done-with-todo/">
   <meta property="og:image" content="https://lifeboatlabs.github.io/done-with-todo/og-image.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Done With To Do: Microsoft To Do shuts down on June 30, 2027. Back up your lists, or move them to Google Tasks.">
+  <meta property="og:image:alt" content="Done With To Do: Microsoft To Do shuts down on June 30, 2027. Back up every list, task and note before it goes.">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="canonical" href="https://lifeboatlabs.github.io/done-with-todo/">
-  <link rel="icon" href="favicon.svg?v=8" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=8">
-  <script src="config.js?v=8" defer></script>
-  <script src="core.js?v=8" defer></script>
-  <script src="zip.js?v=8" defer></script>
-  <script src="microsoft.js?v=8" defer></script>
-  <script src="google.js?v=8" defer></script>
-  <script src="app.js?v=8" defer></script>
+  <link rel="icon" href="favicon.svg?v=9" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css?v=9">
+  <script src="config.js?v=9" defer></script>
+  <script src="core.js?v=9" defer></script>
+  <script src="zip.js?v=9" defer></script>
+  <script src="microsoft.js?v=9" defer></script>
+  <script src="google.js?v=9" defer></script>
+  <script src="app.js?v=9" defer></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to the main content</a>
@@ -73,7 +73,7 @@
         <div class="sign-body">
           <p class="sign-lead">Microsoft To Do shuts down on June 30, 2027.</p>
           <h1 id="start-title" tabindex="-1">Take your lists with you.</h1>
-          <p class="sign-text">Move them to Google Tasks, or save a full backup you can open anywhere. It's free and open source, and it all happens in your browser.</p>
+          <p class="sign-text" id="start-text">Save a full backup of every list, task, step and note, in files you can open anywhere. It's free and open source, and it all happens in your browser.</p>
           <div class="sign-actions">
             <button type="button" id="signin-ms" class="btn btn-sign">Sign in with Microsoft</button>
             <button type="button" id="try-demo" class="btn btn-sign-quiet">Try it with sample data</button>
@@ -85,13 +85,13 @@
       <ol class="route" aria-label="How it works">
         <li><strong>Sign in with Microsoft</strong><span>Microsoft shows exactly what you're agreeing to share.</span></li>
         <li><strong>Choose your lists</strong><span>See everything that was found, and pick what to take.</span></li>
-        <li><strong>Save or move</strong><span>Download a backup, or copy your lists into Google Tasks.</span></li>
+        <li id="route-save"><strong>Save your backup</strong><span>Download everything in one zip, or just the spreadsheet.</span></li>
       </ol>
 
       <section class="block" aria-labelledby="dest-title">
         <h2 id="dest-title">Where your lists can go</h2>
         <ul class="directions">
-          <li class="direction">
+          <li class="direction" id="dir-google" hidden>
             <span class="direction-arrow" aria-hidden="true"></span>
             <div><h3>Google Tasks</h3><p>Lists, tasks, steps (as subtasks), notes and due dates. Repeats and reminders are written into each task's notes, because Google Tasks can't take them.</p></div>
             <span class="direction-state" id="dest-google-state">Available</span>
@@ -114,7 +114,7 @@
         <ul class="plain-list">
           <li>With your permission, it reads your To Do lists and your name. Microsoft doesn't let it see anything else.</li>
           <li>Everything happens in this browser tab. There's no server and no database, so your tasks never reach the people who made this.</li>
-          <li>If you choose Google Tasks, it can add lists and tasks to your Google account. It never deletes anything.</li>
+          <li id="trust-google" hidden>If you choose Google Tasks, it can add lists and tasks to your Google account. It never deletes anything.</li>
           <li>No ads, no tracking, no cookies. <a href="privacy.html">Read the privacy page</a><span class="source-sentence" hidden>, or <a id="trust-source" href="#">read the code</a></span>.</li>
         </ul>
       </section>
@@ -123,7 +123,7 @@
         <h2 id="faq-title">Questions</h2>
         <details><summary>Will this change anything in Microsoft To Do?</summary><p>No. It only asks Microsoft for permission to read. If you choose to include attached files, Microsoft makes it ask for wider permission, because that's the only way Microsoft shares them, but the page still only reads. Your To Do lists stay exactly as they are until Microsoft closes the app.</p></details>
         <details><summary>Why does Microsoft call this app "unverified"?</summary><p>Microsoft only gives its "verified" badge to registered companies. This is a free project made by an individual, so it shows as unverified. The code is public, so anyone can check what it does.</p></details>
-        <details><summary>What doesn't move to Google Tasks?</summary><p>Google Tasks has no repeats, reminders, importance or attachments. Those details are written into each task's notes, and kept in full in the backup. Microsoft doesn't share My Day or list groups with other apps, so nothing can copy those.</p></details>
+        <details id="faq-google" hidden><summary>What doesn't move to Google Tasks?</summary><p>Google Tasks has no repeats, reminders, importance or attachments. Those details are written into each task's notes, and kept in full in the backup. Microsoft doesn't share My Day or list groups with other apps, so nothing can copy those.</p></details>
         <details><summary>Can I use a work or school account?</summary><p>Usually. Some organisations block apps they haven't approved. If yours does, Microsoft will say an administrator needs to approve it. Microsoft is moving work and school accounts to Planner.</p></details>
         <details><summary>What about lists that other people share with me?</summary><p>They're included. The people on a shared list don't come along, so share the new list with them again in your new app.</p></details>
         <details><summary>Is it really free?</summary><p>Yes, with no catch. If it helps you, a star on GitHub helps other people find it<span class="donate-sentence" hidden>, and a <a class="donate-link" href="#">tip</a> keeps it going</span>.</p></details>
@@ -160,18 +160,18 @@
       <section class="block" aria-labelledby="lists-title">
         <div class="block-head">
           <h2 id="lists-title">Your lists</h2>
-          <p class="inline-actions"><button type="button" id="ov-select-all" class="btn-link">Select all</button> <button type="button" id="ov-select-none" class="btn-link">Select none</button></p>
+          <p class="inline-actions" id="ov-pick-actions" hidden><button type="button" id="ov-select-all" class="btn-link">Select all</button> <button type="button" id="ov-select-none" class="btn-link">Select none</button></p>
         </div>
         <div class="table-scroll">
-          <table class="lists">
+          <table class="lists no-pick" id="ov-table">
             <thead><tr><th scope="col"><span class="visually-hidden">Include</span></th><th scope="col">List</th><th scope="col" class="num">Open</th><th scope="col" class="num">Done</th></tr></thead>
             <tbody id="ov-lists"></tbody>
           </table>
         </div>
-        <p class="muted small">The backup always includes every list. Your choices here decide what moves to Google Tasks.</p>
+        <p class="muted small" id="ov-pick-note" hidden>The backup always includes every list. Your choices here decide what moves to Google Tasks.</p>
       </section>
 
-      <div class="destinations">
+      <div class="destinations destinations-single" id="destinations">
         <section class="dest dest-backup" aria-labelledby="backup-title">
           <h2 id="backup-title">Save a full backup</h2>
           <p>One zip file with a spreadsheet, a printable page, Markdown for Obsidian, calendar files for other task apps<span id="backup-att-phrase">, and your attachments</span>.</p>
@@ -187,7 +187,7 @@
           <div id="backup-thanks" class="thanks" hidden></div>
         </section>
 
-        <section class="dest dest-google" aria-labelledby="google-title">
+        <section class="dest dest-google" id="dest-google-card" aria-labelledby="google-title" hidden>
           <h2 id="google-title">Move to Google Tasks</h2>
           <p>Each list you picked becomes a new list in Google Tasks. Steps become subtasks. Repeats, reminders and importance go into each task's notes.</p>
           <label class="check"><input type="checkbox" id="opt-completed"> <span>Copy completed tasks too</span></label>
