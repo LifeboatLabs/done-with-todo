@@ -11,7 +11,7 @@ window.DWTD_CONFIG = {
 
   // Google Cloud -> Google Auth Platform -> Clients -> your web client -> "Client ID"
   // Leave as it is to launch without Google Tasks; the button will say "Coming soon".
-  googleClientId: "PASTE-YOUR-GOOGLE-CLIENT-ID-HERE",
+  googleClientId: "49981952788-flgm821vvrnti82br3ska88jse680e9n.apps.googleusercontent.com",
 
   // Your tip or sponsor page, for example "https://ko-fi.com/yourname"
   // or "https://github.com/sponsors/yourname". Leave empty to hide the tip button.
