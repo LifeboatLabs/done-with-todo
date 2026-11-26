@@ -72,4 +72,4 @@ Done With To Do isn't made by, or affiliated with, Microsoft or Google. Microsof
 
 ## Lifeboat Labs
 
-Done With To Do is made by [Lifeboat Labs](https://lifeboatlabs.github.io/): free tools for when the apps you rely on shut down. Know an app that's closing? [Suggest it](https://github.com/LifeboatLabs/lifeboatlabs.github.io/issues/new?title=Shutting%20down%3A%20).
+Done With To Do is made by [Lifeboat Labs](https://lifeboatlabs.github.io/): free tools for when the apps you rely on shut down. Know an app that's closing? [Suggest it](https://github.com/LifeboatLabs/lifeboatlabs.github.io/issues/new?title=Shutting%20down%3A%20). For new tools and updates, follow [Lifeboat Labs on X](https://x.com/Lifeboat_labs).
