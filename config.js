@@ -20,9 +20,6 @@ window.DWTD_CONFIG = {
   // Your tip or sponsor page, for example "https://ko-fi.com/yourname"
   // or "https://github.com/sponsors/yourname". Leave empty to hide the tip button.
   donateUrl: "https://lifeboatlabs.github.io/tip/",
-  // The iCloud link of the "Done With To Do" Apple Shortcut, which adds lists to Apple Reminders.
-  // Leave empty until it's published: then only testers (?testers) see the Reminders option.
-  remindersShortcutUrl: "",
 
   // Shown on the privacy page. Google asks for a way to contact the app's owner.
   ownerName: "Lifeboat Labs",

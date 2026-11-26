@@ -17,14 +17,14 @@
   <meta property="og:image:alt" content="Done With To Do: Microsoft To Do shuts down on June 30, 2027. Back up your lists, or move them to Google Tasks.">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="canonical" href="https://lifeboatlabs.github.io/done-with-todo/">
-  <link rel="icon" href="favicon.svg?v=7" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=7">
-  <script src="config.js?v=7" defer></script>
-  <script src="core.js?v=7" defer></script>
-  <script src="zip.js?v=7" defer></script>
-  <script src="microsoft.js?v=7" defer></script>
-  <script src="google.js?v=7" defer></script>
-  <script src="app.js?v=7" defer></script>
+  <link rel="icon" href="favicon.svg?v=8" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css?v=8">
+  <script src="config.js?v=8" defer></script>
+  <script src="core.js?v=8" defer></script>
+  <script src="zip.js?v=8" defer></script>
+  <script src="microsoft.js?v=8" defer></script>
+  <script src="google.js?v=8" defer></script>
+  <script src="app.js?v=8" defer></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to the main content</a>
@@ -100,11 +100,6 @@
             <span class="direction-arrow" aria-hidden="true"></span>
             <div><h3>A full backup</h3><p>A spreadsheet, a printable page, Markdown files for Obsidian, calendar files for other task apps, and the files attached to your tasks.</p></div>
             <span class="direction-state">Available</span>
-          </li>
-          <li class="direction direction-later" id="dir-reminders">
-            <span class="direction-arrow" aria-hidden="true"></span>
-            <div><h3>Apple Reminders</h3><p id="dir-reminders-text">Coming soon. Save a backup now and you'll be ready.</p></div>
-            <span class="direction-state" id="dir-reminders-state">Coming soon</span>
           </li>
           <li class="direction direction-elsewhere">
             <span class="direction-arrow" aria-hidden="true"></span>
@@ -202,27 +197,11 @@
           <p id="google-estimate" class="muted small"></p>
           <p id="google-status" class="status" aria-live="polite"></p>
         </section>
-
-        <section class="dest dest-reminders" id="dest-reminders" aria-labelledby="reminders-title" hidden>
-          <h2 id="reminders-title">Move to Apple Reminders</h2>
-          <p>Uses a free Apple Shortcut on your iPhone, iPad or Mac. Each list you picked becomes a list in Reminders, steps become subtasks, and dates and notes come too.</p>
-          <div id="reminders-apple">
-            <ol class="mini-steps">
-              <li id="reminders-step-get"><a id="reminders-get" href="#" target="_blank" rel="noopener">Add the Done With To Do shortcut</a>. You only need to do this once.</li>
-              <li>Tap <strong>Send to Reminders</strong>. If Shortcuts asks, allow it to paste.</li>
-            </ol>
-            <label class="check"><input type="checkbox" id="opt-rem-completed"> <span>Copy completed tasks too</span></label>
-            <p class="actions"><button type="button" id="reminders-send" class="btn btn-go">Send to Reminders</button></p>
-          </div>
-          <p id="reminders-other" hidden>Open this page on your iPhone, iPad or Mac to send your lists to Reminders. The Apple Shortcut that adds them only runs there.</p>
-          <p id="reminders-status" class="status" aria-live="polite"></p>
-        </section>
       </div>
 
       <section class="block" aria-labelledby="other-title">
         <h2 id="other-title">Somewhere else?</h2>
         <ul class="plain-list">
-          <li id="other-reminders"><strong>Apple Reminders:</strong> coming soon. Save the backup now and you'll be ready.</li>
           <li><strong>Todoist or TickTick:</strong> both have an importer built in. Look for Import, then Microsoft To Do.</li>
           <li><strong>Obsidian, Thunderbird, Nextcloud and other apps:</strong> use the Markdown or calendar files in the backup.</li>
         </ul>

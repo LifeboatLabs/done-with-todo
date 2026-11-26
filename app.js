@@ -24,11 +24,6 @@
   } catch (e) { testers = /[?&]testers\b/.test(location.search); }
   var gIdOk = GOOGLE_ID.test(gId);
   var gOk = gIdOk && (cfg.googleForEveryone !== false || testers);
-  // Apple Reminders goes through an Apple Shortcut: open to everyone once its iCloud link is set.
-  var remUrl = /^https:\/\/www\.icloud\.com\/shortcuts\/[0-9a-f]{32}\/?$/i.test(cfg.remindersShortcutUrl || '') ? cfg.remindersShortcutUrl : '';
-  var remOk = !!remUrl || testers;
-  // Shortcuts runs on iPhone, iPad (which reports itself as a Mac) and Mac.
-  var onApple = /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent || '');
   // Signing in with ?files asks Microsoft for the extra permission it requires before it shares
   // attached files. Remembered for this tab, because the return from Microsoft drops the query.
   var wantFiles = false;
@@ -183,12 +178,6 @@
       $('dest-google-state').textContent = 'Coming soon';
       $('dest-google-state').closest('.direction').classList.add('direction-unavailable');
     }
-    if (remOk) {
-      $('dir-reminders').classList.remove('direction-later');
-      $('dir-reminders-text').textContent = 'Lists, tasks, steps (as subtasks), notes and dates, using a free Apple Shortcut on your iPhone, iPad or Mac. Repeats are written into the notes.';
-      $('dir-reminders-state').textContent = 'Available';
-      $('other-reminders').hidden = true;
-    }
   }
 
   // ------------------------------------------------------------ start
@@ -321,71 +310,8 @@
     }
     gBtn.hidden = !gOk;
     $('opt-completed').closest('.check').hidden = !gOk;
-    renderReminders();
     updateCounts();
     show('overview');
-  }
-
-  // ------------------------------------------------------------ Apple Reminders
-
-  function renderReminders() {
-    $('dest-reminders').hidden = !remOk;
-    if (!remOk) return;
-    $('reminders-apple').hidden = !onApple;
-    $('reminders-other').hidden = onApple;
-    var get = $('reminders-get');
-    if (remUrl) get.href = remUrl;
-    else {
-      // Testers only, before the shortcut is published
-      $('reminders-step-get').textContent = 'Build the shortcut in the Shortcuts app and name it “' + core.REMINDERS_SHORTCUT + '” (its link isn’t published yet).';
-    }
-    if (state.demo) $('reminders-status').textContent = 'This is sample data. Sending it adds the sample lists to Reminders, which is a handy way to test.';
-  }
-
-  /** Copy synchronously, so the tap still counts as the person's own action when Shortcuts opens. */
-  function copyToClipboard(text) {
-    var ta = document.createElement('textarea');
-    ta.value = text;
-    ta.setAttribute('readonly', '');
-    ta.style.position = 'fixed';
-    ta.style.top = '0';
-    ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.select();
-    ta.setSelectionRange(0, text.length);
-    var ok = false;
-    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
-    document.body.removeChild(ta);
-    return ok;
-  }
-
-  function openShortcut() {
-    var url = 'shortcuts://run-shortcut?name=' + encodeURIComponent(core.REMINDERS_SHORTCUT);
-    window.__dwtdShortcutUrl = url; // lets the browser tests see where the tap went
-    location.href = url;
-  }
-
-  function sendToReminders() {
-    var st = $('reminders-status');
-    st.classList.remove('status-error');
-    var data = core.toRemindersData(state.model, { listIds: Array.from(state.selected), includeCompleted: $('opt-rem-completed').checked });
-    var c = core.remindersCount(data);
-    if (!c.reminders) {
-      st.textContent = 'There’s nothing to send: the lists you picked have no open tasks. Tick “Copy completed tasks too” to send finished ones.';
-      return;
-    }
-    var json = JSON.stringify(data);
-    var sending = 'Sending ' + plural(c.reminders, 'task') + ' in ' + plural(c.lists, 'list') + ' to the shortcut. If nothing happens, check that the shortcut is called “' + core.REMINDERS_SHORTCUT + '”.';
-    if (copyToClipboard(json)) { st.textContent = sending; openShortcut(); return; }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(json).then(function () { st.textContent = sending; openShortcut(); }, function () {
-        st.textContent = 'Couldn’t copy your lists for the shortcut. Try again, or try Safari.';
-        st.classList.add('status-error');
-      });
-      return;
-    }
-    st.textContent = 'Couldn’t copy your lists for the shortcut. Try again, or try Safari.';
-    st.classList.add('status-error');
   }
 
   function renderLists() {
@@ -611,7 +537,6 @@
     $('backup-print').addEventListener('click', openPrintable);
     $('backup-csv').addEventListener('click', downloadCSV);
     $('google-move').addEventListener('click', moveToGoogle);
-    $('reminders-send').addEventListener('click', sendToReminders);
     $('g-continue').addEventListener('click', continueTransfer);
     $('g-stop').addEventListener('click', function () { showOverview(); });
     $('g-back').addEventListener('click', function () { showOverview(); });
