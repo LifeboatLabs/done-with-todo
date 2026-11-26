@@ -13,6 +13,10 @@ window.DWTD_CONFIG = {
   // Leave as it is to launch without Google Tasks; the button will say "Coming soon".
   googleClientId: "49981952788-flgm821vvrnti82br3ska88jse680e9n.apps.googleusercontent.com",
 
+  // Keep false until Google approves the app. While false, only testers see the Google Tasks
+  // button: open the site with ?testers on the end. Then change it to true for everyone.
+  googleForEveryone: false,
+
   // Your tip or sponsor page, for example "https://ko-fi.com/yourname"
   // or "https://github.com/sponsors/yourname". Leave empty to hide the tip button.
   donateUrl: "",

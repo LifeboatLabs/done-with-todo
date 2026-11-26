@@ -16,7 +16,14 @@
   var msId = String(cfg.microsoftClientId || '').trim();
   var gId = String(cfg.googleClientId || '').trim();
   var msOk = GUID.test(msId);
-  var gOk = GOOGLE_ID.test(gId);
+  // Until Google approves the app, only testers (who open the site with ?testers) see Google Tasks.
+  var testers = false;
+  try {
+    if (/[?&]testers\b/.test(location.search)) sessionStorage.setItem('dwtd.testers', '1');
+    testers = sessionStorage.getItem('dwtd.testers') === '1';
+  } catch (e) { testers = /[?&]testers\b/.test(location.search); }
+  var gIdOk = GOOGLE_ID.test(gId);
+  var gOk = gIdOk && (cfg.googleForEveryone !== false || testers);
 
   var state = {
     ms: null, google: null, raw: null, model: null, demo: false,
@@ -136,6 +143,9 @@
       bad: 'Google client ID: this doesn’t look right. It should end in .apps.googleusercontent.com.'
     }[g];
     $('setup-ms-status').textContent = msText;
+    if (g === 'ok' && cfg.googleForEveryone === false) {
+      gText += ' Only testers see it for now (open the site with ?testers). Change googleForEveryone to true once Google approves the app.';
+    }
     $('setup-google-status').textContent = gText;
     $('setup-donate-status').textContent = donateUrl()
       ? 'Tip button: set.'
@@ -424,6 +434,7 @@
     var notes = $('g-done-notes');
     clear(notes);
     function note(text) { notes.appendChild(el('li', { text: text })); }
+    note('Not seeing them? Google Tasks may be showing a different Google account. Click your picture at the top right of Google Tasks and switch to the account you just used.');
     if (r.repeating) note((r.repeating === 1 ? '1 task repeats' : r.repeating + ' tasks repeat') + '. Google Tasks can’t copy repeats, so each one says how it repeated in its notes. Open it in Google Tasks and set the repeat again.');
     if (r.reminders) note((r.reminders === 1 ? '1 task had a reminder' : r.reminders + ' tasks had reminders') + '. The reminder time is in the task’s notes.');
     if (r.important) note(r.important === 1 ? '1 task was marked important. That’s noted in the task.' : r.important + ' tasks were marked important. That’s noted in each one.');
