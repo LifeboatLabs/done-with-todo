@@ -43,7 +43,7 @@ Microsoft doesn't always let other apps download the files attached to tasks. We
 
 ## Support the project
 
-If this saved you an afternoon of retyping, **star this repository** so other people can find it.
+If this saved you an afternoon of retyping, **star this repository** so other people can find it. Tips are welcome too: [leave a tip](https://lifeboatlabs.github.io/tip/) in SOL, ETH or USDC.
 
 ## Run your own copy
 

@@ -19,7 +19,7 @@ window.DWTD_CONFIG = {
 
   // Your tip or sponsor page, for example "https://ko-fi.com/yourname"
   // or "https://github.com/sponsors/yourname". Leave empty to hide the tip button.
-  donateUrl: "",
+  donateUrl: "https://lifeboatlabs.github.io/tip/",
 
   // Shown on the privacy page. Google asks for a way to contact the app's owner.
   ownerName: "Lifeboat Labs",
