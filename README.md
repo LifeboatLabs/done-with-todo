@@ -6,13 +6,15 @@ Done With To Do is a free web page that copies your Microsoft To Do lists into G
 
 **Use it here:** https://lifeboatlabs.github.io/done-with-todo/
 
+![Done With To Do with sample data: five lists, a button to save a full backup and a button to move the lists to Google Tasks](screenshots/overview.png)
+
 ## What it does
 
 1. **Sign in with Microsoft.** It asks for read-only access, so it can't change or delete anything in To Do.
 2. **Choose your lists.** You see every list and task it found.
 3. **Save or move them.**
     - **Full backup (.zip):** a spreadsheet (CSV), a printable page, Markdown files for Obsidian (Tasks plugin format), calendar files (.ics) for Thunderbird, Nextcloud, Tasks.org and others, a JSON file with everything, and the files attached to your tasks.
-    - **Google Tasks:** each list becomes a Google Tasks list. Steps become subtasks, and notes, due dates and completed tasks come too.
+    - **Google Tasks:** each list becomes a Google Tasks list. Steps become subtasks, and notes, due dates and completed tasks come too. This opens to everyone once Google finishes reviewing the app; until then the page says "Coming soon".
     - **Apple Reminders:** coming soon.
 
 ## What moves where
@@ -27,15 +29,17 @@ Done With To Do is a free web page that copies your Microsoft To Do lists into G
 | Repeats | Yes | Written into the task's notes, because Google Tasks can't import repeats |
 | Reminders | Yes | Written into the task's notes |
 | Importance, categories, links | Yes | Written into the task's notes |
-| Attached files | Yes, in the zip | Names written into the notes |
+| Attached files | Yes, in the zip, when Microsoft allows it (see below) | Names written into the notes |
 | My Day, list groups | No, because Microsoft doesn't share these with other apps | No |
+
+Microsoft doesn't always let other apps download the files attached to tasks. We've seen it refuse for personal accounts. When that happens, the backup still includes everything else, and both the page and the backup's README list the tasks whose files you should save from To Do by hand.
 
 ## Privacy
 
 - Your tasks go straight from Microsoft to your browser and, if you choose, straight to Google.
 - Sign-in tokens stay in the page's memory and disappear when you close the tab.
 - The page's Content Security Policy only lets it connect to Microsoft and Google.
-- No cookies, analytics or ads. Read the full [privacy page](privacy.html).
+- No cookies, analytics or ads. Read the full [privacy page](https://lifeboatlabs.github.io/done-with-todo/privacy.html).
 
 ## Support the project
 
@@ -63,3 +67,7 @@ The tests cover the backup formats, the zip writer, Microsoft sign-in (PKCE) and
 MIT. The Fira Sans font is under the SIL Open Font License (see `FONT-LICENSE.txt`).
 
 Done With To Do isn't made by, or affiliated with, Microsoft or Google. Microsoft To Do is a trademark of Microsoft.
+
+## Lifeboat Labs
+
+Done With To Do is made by [Lifeboat Labs](https://lifeboatlabs.github.io/): free tools for when the apps you rely on shut down. Know an app that's closing? [Suggest it](https://github.com/LifeboatLabs/lifeboatlabs.github.io/issues/new?title=Shutting%20down%3A%20).

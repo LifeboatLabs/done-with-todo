@@ -79,6 +79,11 @@
       };
       root.document.head.appendChild(s);
     }).then(function () {
+      // Some blockers swap Google's script for an empty one, so it "loads" but does nothing.
+      if (!(root.google && root.google.accounts && root.google.accounts.oauth2)) {
+        self._ready = null;
+        throw err('google_load', 'Couldn’t load Google sign-in. A browser extension or network filter may be blocking accounts.google.com.');
+      }
       self._tokenClient = root.google.accounts.oauth2.initTokenClient({
         client_id: self.clientId,
         scope: SCOPE,
