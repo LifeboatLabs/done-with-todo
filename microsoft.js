@@ -134,7 +134,7 @@
   /** Step 1: build the Microsoft sign-in address (and remember the one-time secrets for step 2). */
   MicrosoftClient.prototype.signInUrl = async function () {
     var verifier = randomString(48), state = randomString(16);
-    this.storage.setItem(KEY, JSON.stringify({ v: verifier, s: state, t: Date.now() }));
+    this.storage.setItem(KEY, JSON.stringify({ v: verifier, s: state, t: Date.now(), sc: this.scopes }));
     var q = new URLSearchParams({
       client_id: this.clientId, response_type: 'code', redirect_uri: this.redirectUri,
       response_mode: 'fragment', scope: this.scopes, state: state,
@@ -159,7 +159,7 @@
     }
     var body = new URLSearchParams({
       client_id: this.clientId, grant_type: 'authorization_code', code: params.get('code'),
-      redirect_uri: this.redirectUri, code_verifier: saved.v, scope: this.scopes
+      redirect_uri: this.redirectUri, code_verifier: saved.v, scope: saved.sc || this.scopes
     });
     var res, data;
     try {

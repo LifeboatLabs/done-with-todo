@@ -10,7 +10,7 @@ Done With To Do is a free web page that copies your Microsoft To Do lists into G
 
 ## What it does
 
-1. **Sign in with Microsoft.** It asks for read-only access, so it can't change or delete anything in To Do.
+1. **Sign in with Microsoft.** It asks for read-only access, so it can't change or delete anything in To Do. (Attached files need one extra permission; see below.)
 2. **Choose your lists.** You see every list and task it found.
 3. **Save or move them.**
     - **Full backup (.zip):** a spreadsheet (CSV), a printable page, Markdown files for Obsidian (Tasks plugin format), calendar files (.ics) for Thunderbird, Nextcloud, Tasks.org and others, a JSON file with everything, and the files attached to your tasks.
@@ -29,10 +29,10 @@ Done With To Do is a free web page that copies your Microsoft To Do lists into G
 | Repeats | Yes | Written into the task's notes, because Google Tasks can't import repeats |
 | Reminders | Yes | Written into the task's notes |
 | Importance, categories, links | Yes | Written into the task's notes |
-| Attached files | Yes, in the zip, when Microsoft allows it (see below) | Names written into the notes |
+| Attached files | Yes, in the zip (see below) | Names written into the notes |
 | My Day, list groups | No, because Microsoft doesn't share these with other apps | No |
 
-Microsoft doesn't always let other apps download the files attached to tasks. We've seen it refuse for personal accounts. When that happens, the backup still includes everything else, and both the page and the backup's README list the tasks whose files you should save from To Do by hand.
+On personal accounts, Microsoft only shares the files attached to tasks with apps that also have permission to change tasks (`Tasks.ReadWrite`). So the page starts read-only, and if it finds files Microsoft held back, it offers an **Include attached files** button that signs you in again with that permission. The page still only reads: every request it sends to Microsoft is a `GET`, and the tests check that. If you'd rather not allow it, the backup still includes everything else and lists the tasks whose files you should save by hand.
 
 ## Privacy
 

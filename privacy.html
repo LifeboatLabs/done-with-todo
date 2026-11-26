@@ -7,10 +7,10 @@
   <meta name="color-scheme" content="light">
   <title>Privacy: Done With To Do</title>
   <link rel="canonical" href="https://lifeboatlabs.github.io/done-with-todo/privacy.html">
-  <link rel="icon" href="favicon.svg?v=5" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=5">
-  <script src="config.js?v=5" defer></script>
-  <script src="privacy.js?v=5" defer></script>
+  <link rel="icon" href="favicon.svg?v=6" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css?v=6">
+  <script src="config.js?v=6" defer></script>
+  <script src="privacy.js?v=6" defer></script>
 </head>
 <body>
   <header class="site-header">
@@ -40,6 +40,10 @@
     <ul class="plain-list">
       <li>Permission to read your tasks and task lists (<code>Tasks.Read</code>), so it can save or move them. It can't change or delete them.</li>
       <li>Permission to sign you in and see your basic profile (<code>User.Read</code>, <code>openid</code>, <code>profile</code>), so the page can show whose lists these are.</li>
+    </ul>
+    <p><strong>From Microsoft, only if you choose "Include attached files":</strong></p>
+    <ul class="plain-list">
+      <li>Permission to read and change your tasks (<code>Tasks.ReadWrite</code>) instead of read-only access. On personal accounts, Microsoft only shares the files attached to tasks with apps that have this permission. The page still only reads: every request it sends to Microsoft is a read, so it never changes or deletes anything. The code is public, so anyone can check.</li>
     </ul>
     <p><strong>From Google, only if you choose "Move to Google Tasks":</strong></p>
     <ul class="plain-list">

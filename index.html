@@ -17,14 +17,14 @@
   <meta property="og:image:alt" content="Done With To Do: Microsoft To Do shuts down on June 30, 2027. Back up your lists, or move them to Google Tasks.">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="canonical" href="https://lifeboatlabs.github.io/done-with-todo/">
-  <link rel="icon" href="favicon.svg?v=5" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=5">
-  <script src="config.js?v=5" defer></script>
-  <script src="core.js?v=5" defer></script>
-  <script src="zip.js?v=5" defer></script>
-  <script src="microsoft.js?v=5" defer></script>
-  <script src="google.js?v=5" defer></script>
-  <script src="app.js?v=5" defer></script>
+  <link rel="icon" href="favicon.svg?v=6" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css?v=6">
+  <script src="config.js?v=6" defer></script>
+  <script src="core.js?v=6" defer></script>
+  <script src="zip.js?v=6" defer></script>
+  <script src="microsoft.js?v=6" defer></script>
+  <script src="google.js?v=6" defer></script>
+  <script src="app.js?v=6" defer></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to the main content</a>
@@ -126,7 +126,7 @@
 
       <section class="block" aria-labelledby="faq-title">
         <h2 id="faq-title">Questions</h2>
-        <details><summary>Will this change anything in Microsoft To Do?</summary><p>No. It only asks Microsoft for permission to read. Your To Do lists stay exactly as they are until Microsoft closes the app.</p></details>
+        <details><summary>Will this change anything in Microsoft To Do?</summary><p>No. It only asks Microsoft for permission to read. If you choose to include attached files, Microsoft makes it ask for wider permission, because that's the only way Microsoft shares them, but the page still only reads. Your To Do lists stay exactly as they are until Microsoft closes the app.</p></details>
         <details><summary>Why does Microsoft call this app "unverified"?</summary><p>Microsoft only gives its "verified" badge to registered companies. This is a free project made by an individual, so it shows as unverified. The code is public, so anyone can check what it does.</p></details>
         <details><summary>What doesn't move to Google Tasks?</summary><p>Google Tasks has no repeats, reminders, importance or attachments. Those details are written into each task's notes, and kept in full in the backup. Microsoft doesn't share My Day or list groups with other apps, so nothing can copy those.</p></details>
         <details><summary>Can I use a work or school account?</summary><p>Usually. Some organisations block apps they haven't approved. If yours does, Microsoft will say an administrator needs to approve it. Microsoft is moving work and school accounts to Planner.</p></details>
@@ -157,6 +157,7 @@
       <p id="ov-summary" class="summary"></p>
       <div id="ov-att-warning" class="notice notice-caution" hidden>
         <p id="ov-att-text"></p>
+        <p class="actions" id="ov-att-allow-row" hidden><button type="button" id="ov-att-allow" class="btn btn-go">Include attached files</button></p>
         <details><summary>Technical details</summary><pre id="ov-att-details"></pre></details>
       </div>
       <p id="ov-empty" class="notice notice-caution" hidden>No tasks were found in this account. If you use To Do with a different Microsoft account, such as a work account, click Start over and choose that one.</p>

@@ -191,6 +191,18 @@
     show('start');
   }
 
+  /** Sign in again, this time with the permission Microsoft requires before it shares attached files. */
+  async function includeAttachedFiles() {
+    var btn = $('ov-att-allow');
+    if (!state.ms) return;
+    try { sessionStorage.setItem('dwtd.files', '1'); } catch (e) { /* this sign-in still asks for it */ }
+    wantFiles = true;
+    state.ms.scopes = MicrosoftClient.FILE_SCOPES;
+    setBusy(btn, true, 'Opening Microsoft…');
+    try { location.assign(await state.ms.signInUrl()); }
+    catch (e) { setBusy(btn, false); showError(e, 'Couldn’t start signing in'); }
+  }
+
   async function signInWithMicrosoft() {
     var btn = $('signin-ms');
     if (!state.ms) return;
@@ -259,10 +271,17 @@
     // The box is new: a page saved by the browser before it existed won't have it.
     var heldBack = s.attachmentsUnavailable, attBox = $('ov-att-warning');
     if (attBox) attBox.hidden = !heldBack;
+    // Microsoft only shares attached files on personal accounts with apps allowed to change tasks.
+    // Offer that once; if it's been allowed and files are still held back, fall back to saving by hand.
+    var canAsk = !wantFiles && !state.demo && !!state.ms;
+    var allowRow = $('ov-att-allow-row');
+    if (allowRow) allowRow.hidden = !(heldBack && canAsk);
     if (heldBack && attBox) {
-      $('ov-att-text').textContent = 'Microsoft wouldn’t share the attached files on ' + plural(heldBack, 'task') +
-        ', so they can’t go in the backup. Everything else is fine. Open ' + (heldBack === 1 ? 'that task' : 'those tasks') +
-        ' in To Do and save the files by hand. The backup’s README lists ' + (heldBack === 1 ? 'it' : 'them') + '.';
+      $('ov-att-text').textContent = canAsk
+        ? 'Microsoft didn’t share the attached files on ' + plural(heldBack, 'task') + '. It only shares attached files with apps that also have permission to change tasks. If you allow that, Done With To Do still only reads your tasks: it never changes or deletes anything, and its code is public.'
+        : 'Microsoft wouldn’t share the attached files on ' + plural(heldBack, 'task') +
+          ', so they can’t go in the backup. Everything else is fine. Open ' + (heldBack === 1 ? 'that task' : 'those tasks') +
+          ' in To Do and save the files by hand. The backup’s README lists ' + (heldBack === 1 ? 'it' : 'them') + '.';
       $('ov-att-details').textContent = ((state.raw && state.raw.attachmentProblems) || []).map(function (p) {
         return p.list + ' / ' + p.task + '\n' + p.details;
       }).join('\n\n');
@@ -508,6 +527,7 @@
 
   function wire() {
     $('signin-ms').addEventListener('click', signInWithMicrosoft);
+    if ($('ov-att-allow')) $('ov-att-allow').addEventListener('click', includeAttachedFiles);
     $('try-demo').addEventListener('click', startDemo);
     $('start-over').addEventListener('click', startOver);
     $('ov-select-all').addEventListener('click', function () { setAll(true); });
