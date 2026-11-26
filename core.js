@@ -20,7 +20,7 @@
   var core = {};
   // Shown in technical details, so a report says which version of the site the person had.
   // Bump it together with the ?v= numbers in index.html and privacy.html.
-  core.VERSION = '6';
+  core.VERSION = '7';
 
   // ---------------------------------------------------------------- errors
 
@@ -614,9 +614,15 @@
   core.GOOGLE_NOTES_MAX = 8192;
 
   /** Google Tasks has no repeats, reminders, importance or files, so they're written into the notes. */
-  core.googleNotes = function (t) {
+  core.googleNotes = function (t) { return core.carriedNotes(t, 'Google Tasks', []); };
+
+  /**
+   * A task's notes, plus a footer with everything the destination app can't store itself.
+   * app: the destination's name, for the repeat hint. more: extra footer lines.
+   */
+  core.carriedNotes = function (t, app, more) {
     var extra = [];
-    if (t.recurrence) extra.push('Repeats ' + t.recurrence.text + ' (set the repeat again in Google Tasks)');
+    if (t.recurrence) extra.push('Repeats ' + t.recurrence.text + ' (set the repeat again in ' + app + ')');
     if (t.reminder) extra.push('Reminder was set for ' + t.reminder);
     if (t.important) extra.push('Marked as important');
     if (!t.done && t.status !== 'notstarted' && t.statusLabel) extra.push('Status: ' + t.statusLabel);
@@ -627,6 +633,7 @@
       extra.push('Attachments not copied (they are in your backup): ' + t.attachments.map(function (a) { return a.name; }).join(', '));
     }
     if (t.attachmentsUnavailable) extra.push('This task has attached files that Microsoft wouldn’t share. Save them from To Do.');
+    extra = extra.concat(more || []);
     var footer = extra.length ? '\u2014 From Microsoft To Do \u2014\n' + extra.join('\n') : '';
     var notes = t.notes || '';
     var sep = notes && footer ? '\n\n' : '';
@@ -648,6 +655,52 @@
     if (t.due) body.due = t.due + 'T00:00:00.000Z';
     if (t.done && t.completedAt) body.completed = t.completedAt;
     return body;
+  };
+
+  // ---------------------------------------------------------------- Apple Reminders
+
+  /** The name the Apple Shortcut must have, so the page can start it. */
+  core.REMINDERS_SHORTCUT = 'Done With To Do';
+
+  /**
+   * What the Done With To Do shortcut reads from the clipboard:
+   *   { app, version, lists: [{ name, reminders: [{ title, notes, date, subtasks: [title] }] }] }
+   * date is "" or local "YYYY-MM-DD HH:MM": the reminder time if one was set, otherwise 9:00 on
+   * the due date. Open steps become subtasks; finished steps and anything else Reminders can't
+   * hold are written into the notes.
+   * opts: { listIds (array, optional), includeCompleted }
+   */
+  core.toRemindersData = function (model, opts) {
+    opts = opts || {};
+    var only = opts.listIds ? new Set(opts.listIds) : null;
+    var lists = model.lists.filter(function (l) { return !only || only.has(l.id); }).map(function (l) {
+      var tasks = l.tasks.filter(function (t) { return opts.includeCompleted || !t.done; });
+      return {
+        name: String(l.name || '').trim() || 'Untitled list',
+        reminders: tasks.map(function (t) {
+          var open = t.steps.filter(function (st) { return !st.done; });
+          var finished = t.steps.filter(function (st) { return st.done; });
+          var more = [];
+          if (t.reminder && t.due && t.reminder.slice(0, 10) !== t.due) more.push('Due date in To Do: ' + t.due);
+          if (finished.length) more.push('Steps already done: ' + finished.map(function (st) { return st.title || '(untitled)'; }).join(', '));
+          if (t.done) more.push('Completed in To Do' + (t.completedDate ? ' on ' + t.completedDate : ''));
+          return {
+            title: t.title || '(untitled)',
+            notes: core.carriedNotes(t, 'Reminders', more),
+            date: t.reminder || (t.due ? t.due + ' 09:00' : ''),
+            subtasks: open.map(function (st) { return st.title || '(untitled)'; })
+          };
+        })
+      };
+    }).filter(function (l) { return l.reminders.length > 0; });
+    return { app: 'Done With To Do', version: 1, lists: lists };
+  };
+
+  /** Counts for the Reminders button. */
+  core.remindersCount = function (data) {
+    var r = 0, s = 0;
+    data.lists.forEach(function (l) { r += l.reminders.length; l.reminders.forEach(function (x) { s += x.subtasks.length; }); });
+    return { lists: data.lists.length, reminders: r, subtasks: s };
   };
 
   core.googleStepBody = function (s) {

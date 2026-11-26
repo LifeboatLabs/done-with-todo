@@ -451,6 +451,42 @@ test('Opting in to attached files asks for Tasks.ReadWrite, but the site still o
   assert.strictEqual(new URL(await plain.signInUrl()).searchParams.get('scope'), 'openid profile User.Read Tasks.Read');
 });
 
+test('Apple Reminders data: lists, dates, open steps as subtasks, everything else in the notes', () => {
+  const m = core.normalize(core.sampleData());
+  const all = core.toRemindersData(m, {});
+  assert.strictEqual(all.app, 'Done With To Do');
+  assert.ok(all.lists.length >= 4);
+  all.lists.forEach(l => l.reminders.forEach(r => {
+    assert.strictEqual(typeof r.title, 'string');
+    assert.ok(r.date === '' || /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(r.date), r.date);
+    assert.ok(Array.isArray(r.subtasks));
+  }));
+  // Only open tasks unless asked; finished steps go into the notes
+  const openCount = m.lists.reduce((n, l) => n + l.tasks.filter(t => !t.done).length, 0);
+  assert.strictEqual(core.remindersCount(all).reminders, openCount);
+  const withDone = core.toRemindersData(m, { includeCompleted: true });
+  assert.strictEqual(core.remindersCount(withDone).reminders, m.lists.reduce((n, l) => n + l.tasks.length, 0));
+  assert.ok(withDone.lists.some(l => l.reminders.some(r => /Completed in To Do/.test(r.notes))));
+  // A task with a reminder uses the reminder time; one with only a due date gets 09:00 that day
+  const passport = all.lists.flatMap(l => l.reminders).find(r => r.title === 'Renew passport');
+  assert.strictEqual(passport.date, m.lists.flatMap(l => l.tasks).find(t => t.title === 'Renew passport').reminder);
+  assert.ok(passport.notes.includes('Due date in To Do: '));
+  assert.ok(passport.notes.includes('Steps already done: Get photos taken'));
+  assert.deepStrictEqual(passport.subtasks, ['Fill in the form', 'Book appointment']);
+  const dueOnly = m.lists.flatMap(l => l.tasks).find(t => t.due && !t.reminder && !t.done);
+  const dueOnlyR = all.lists.flatMap(l => l.reminders).find(r => r.title === dueOnly.title);
+  assert.strictEqual(dueOnlyR.date, dueOnly.due + ' 09:00');
+  const repeating = all.lists.flatMap(l => l.reminders).find(r => /Repeats /.test(r.notes));
+  assert.ok(/set the repeat again in Reminders/.test(repeating.notes));
+  // Picking lists, and dropping lists with nothing to send
+  const one = core.toRemindersData(m, { listIds: [m.lists[1].id] });
+  assert.deepStrictEqual(one.lists.map(l => l.name), [m.lists[1].name]);
+  const empty = core.normalize({ rawLists: [{ id: 'x', displayName: 'Done stuff' }], rawTasksByList: { x: [{ id: 't', title: 'old', status: 'completed' }] } });
+  assert.strictEqual(core.toRemindersData(empty, {}).lists.length, 0);
+  // Google's notes keep their own wording
+  assert.ok(/set the repeat again in Google Tasks/.test(core.googleTaskBody(m.lists.flatMap(l => l.tasks).find(t => t.recurrence)).notes));
+});
+
 test('Graph addresses in technical details are short', () => {
   const s = MicrosoftClient._test.shortPath('https://graph.microsoft.com/v1.0/me/todo/lists/AAMkADAwATM3ZmYAZS0yZjQ2LTk0ZWEtMDAyAi0wMAoALgAAA%3D%3D/tasks?$expand=checklistItems,linkedResources&$top=100');
   assert.strictEqual(s, '/v1.0/me/todo/lists/…/tasks?$expand=checklistItems,linkedResources&$top=100');

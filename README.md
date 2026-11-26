@@ -15,22 +15,22 @@ Done With To Do is a free web page that copies your Microsoft To Do lists into G
 3. **Save or move them.**
     - **Full backup (.zip):** a spreadsheet (CSV), a printable page, Markdown files for Obsidian (Tasks plugin format), calendar files (.ics) for Thunderbird, Nextcloud, Tasks.org and others, a JSON file with everything, and the files attached to your tasks.
     - **Google Tasks:** each list becomes a Google Tasks list. Steps become subtasks, and notes, due dates and completed tasks come too. This opens to everyone once Google finishes reviewing the app; until then the page says "Coming soon".
-    - **Apple Reminders:** coming soon.
+    - **Apple Reminders:** on an iPhone, iPad or Mac, a free Apple Shortcut adds each list to Reminders, with steps as subtasks. (The shortcut's link is being published; testers can try it now.)
 
 ## What moves where
 
-| To Do has | Backup | Google Tasks |
-| --- | --- | --- |
-| Lists and tasks | Yes | Yes |
-| Steps | Yes | Yes, as subtasks |
-| Notes | Yes | Yes |
-| Due dates | Yes | Yes |
-| Completed tasks | Yes | Optional |
-| Repeats | Yes | Written into the task's notes, because Google Tasks can't import repeats |
-| Reminders | Yes | Written into the task's notes |
-| Importance, categories, links | Yes | Written into the task's notes |
-| Attached files | Yes, in the zip (see below) | Names written into the notes |
-| My Day, list groups | No, because Microsoft doesn't share these with other apps | No |
+| To Do has | Backup | Google Tasks | Apple Reminders |
+| --- | --- | --- | --- |
+| Lists and tasks | Yes | Yes | Yes |
+| Steps | Yes | Yes, as subtasks | Open steps as subtasks; finished ones in the notes |
+| Notes | Yes | Yes | Yes |
+| Due dates | Yes | Yes | Yes, at 9:00 unless the task had a reminder time |
+| Completed tasks | Yes | Optional | Optional, marked in the notes |
+| Repeats | Yes | Written into the task's notes, because Google Tasks can't import repeats | Written into the notes |
+| Reminders | Yes | Written into the task's notes | Yes, as the reminder's time |
+| Importance, categories, links | Yes | Written into the task's notes | Written into the notes |
+| Attached files | Yes, in the zip (see below) | Names written into the notes | Names written into the notes |
+| My Day, list groups | No, because Microsoft doesn't share these with other apps | No | No |
 
 On personal accounts, Microsoft only shares the files attached to tasks with apps that also have permission to change tasks (`Tasks.ReadWrite`). So the page starts read-only, and if it finds files Microsoft held back, it offers an **Include attached files** button that signs you in again with that permission. The page still only reads: every request it sends to Microsoft is a `GET`, and the tests check that. If you'd rather not allow it, the backup still includes everything else and lists the tasks whose files you should save by hand.
 
@@ -58,9 +58,12 @@ The site is plain HTML, CSS and JavaScript, with no build step and no dependenci
 
 ```
 node tests/unit.test.js
+python3 tests/e2e.py
 ```
 
-The tests cover the backup formats, the zip writer, Microsoft sign-in (PKCE) and paging, and the Google Tasks transfer (ordering, subtasks, rate limits and resuming after a pause), using simulated Microsoft and Google servers.
+The unit tests need nothing but Node. They cover the backup formats, the zip writer, Microsoft sign-in (PKCE) and paging, attachments Microsoft holds back, the Apple Reminders data, and the Google Tasks transfer (ordering, subtasks, rate limits and resuming after a pause).
+
+The browser tests need Python Playwright. They drive the real page in Chrome against fake Microsoft and Google servers: sign-in, reading 124 tasks across pages, the backup zip, the Google Tasks move, the attached-files permission, the Apple Reminders button on an iPhone, and a check that every request to Microsoft is a read.
 
 ## Licence
 
