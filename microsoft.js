@@ -15,6 +15,9 @@
   'use strict';
 
   var GRAPH = 'https://graph.microsoft.com/v1.0';
+  // Tried for attachments when the main address refuses, because Microsoft's attachment
+  // support varies between account types.
+  var BETA = 'https://graph.microsoft.com/beta';
   var SCOPES = 'openid profile User.Read Tasks.Read';
   var KEY = 'dwtd.microsoft.signin';
 
@@ -77,17 +80,37 @@
     return err('ms_signin', 'Microsoft sign-in didn’t work' + (firstLine ? ': ' + firstLine : '.'), d);
   }
 
-  function graphError(status, body) {
+  /** A Graph address that's short and safe to show: no host, long ids replaced with "…". */
+  function shortPath(url) {
+    var u = String(url || '').replace(/^https:\/\/graph\.microsoft\.com/, '');
+    var q = u.indexOf('?'), path = q < 0 ? u : u.slice(0, q), query = q < 0 ? '' : u.slice(q);
+    path = path.split('/').map(function (s) { return s.length > 24 ? '…' : s; }).join('/');
+    try { query = decodeURIComponent(query); } catch (e) { /* keep it encoded */ }
+    if (query.length > 80) query = query.slice(0, 80) + '…';
+    return path + query;
+  }
+
+  /**
+   * fresh: true when our sign-in hasn't reached its expiry time yet. A 401 then isn't an expired
+   * sign-in, so we say so instead of sending the person round the same loop.
+   */
+  function graphError(status, body, fresh, url) {
     var e = (body && body.error) || {};
-    var detail = (e.code ? e.code + ': ' : '') + (e.message || '');
+    var said = [e.code, e.message].filter(Boolean).join(': ');
+    var detail = 'GET ' + shortPath(url) + ' → ' + status + (said ? '\n' + said : '');
     var x;
-    if (status === 401) x = err('ms_auth', 'Your Microsoft sign-in has expired (they last about an hour). Please sign in again.', detail);
+    if (status === 401 && fresh) x = err('ms_auth', 'Microsoft turned down a request even though you’re signed in. Please sign in again. If this keeps happening, tell us what the technical details below say.', detail);
+    else if (status === 401) x = err('ms_auth', 'Your Microsoft sign-in has expired (they last about an hour). Please sign in again.', detail);
     else if (status === 403) x = err('ms_forbidden', 'Microsoft didn’t allow access to your tasks. If this is a work or school account, your organisation may block it. Try a personal account.', detail);
     else if (status === 404) x = err('ms_notfound', 'Microsoft couldn’t find To Do data for this account. If you use To Do with another Microsoft account, start over and pick that one.', detail);
     else x = err('graph', 'Microsoft returned an error (' + status + ')' + (e.message ? ': ' + e.message : '.'), detail);
     x.status = status;
+    x.fresh = status === 401 && !!fresh;
     return x;
   }
+
+  /** True when a failure means the sign-in really has run out, so carrying on is pointless. */
+  function signInExpired(e) { return !!e && e.code === 'ms_auth' && !e.fresh; }
 
   function MicrosoftClient(opts) {
     this.clientId = opts.clientId;
@@ -170,7 +193,7 @@
         await this.sleep(isFinite(after) ? Math.min(after, 60) * 1000 : 1000 * Math.pow(2, attempt));
         continue;
       }
-      if (!res.ok) throw graphError(res.status, await safeJson(res));
+      if (!res.ok) throw graphError(res.status, await safeJson(res), this.tokenValid(), full);
       if (as === 'bytes') return new Uint8Array(await res.arrayBuffer());
       return res.json();
     }
@@ -221,42 +244,68 @@
     } catch (e) { if (e.code === 'ms_auth') throw e; }
     report({ phase: 'lists' });
     var lists = await this.getAll('/me/todo/lists');
-    var tasksByList = {}, total = 0;
+    var tasksByList = {}, total = 0, problems = [];
     for (var i = 0; i < lists.length; i++) {
       var l = lists[i];
       report({ phase: 'tasks', index: i, count: lists.length, listName: l.displayName || 'Untitled list', tasks: total });
       var tasks = await this.getTasks(l.id);
       var withFiles = tasks.filter(function (t) { return t.hasAttachments; });
       await eachLimit(withFiles, 4, async function (t) {
-        var path = '/me/todo/lists/' + enc(l.id) + '/tasks/' + enc(t.id) + '/attachments';
-        try { t.attachments = await self.getAll(path + '?$select=id,name,size,contentType'); }
-        catch (e) {
-          if (e.code === 'ms_auth') throw e;
-          try { t.attachments = (await self.getAll(path)).map(function (a) { return { id: a.id, name: a.name, size: a.size, contentType: a.contentType }; }); }
-          catch (e2) { if (e2.code === 'ms_auth') throw e2; t.attachments = []; }
+        var found = await self.listAttachments(l.id, t.id);
+        t.attachments = found.files;
+        // Microsoft wouldn't say what's attached. Carry on with everything else and flag the task,
+        // so the backup can tell the person to save those files from To Do by hand.
+        if (found.error) {
+          t.attachmentsUnavailable = true;
+          problems.push({ list: l.displayName || 'Untitled list', task: t.title || 'Untitled task', details: found.details });
         }
       });
       tasksByList[l.id] = tasks;
       total += tasks.length;
     }
     report({ phase: 'done', count: lists.length, tasks: total });
-    return { account: account, rawLists: lists, rawTasksByList: tasksByList, exportedAt: new Date().toISOString() };
+    return { account: account, rawLists: lists, rawTasksByList: tasksByList, attachmentProblems: problems, exportedAt: new Date().toISOString() };
   };
 
-  /** Download one attachment's bytes. */
+  /**
+   * The names and sizes of a task's attached files: { files: [...] }, or { files: [], error }
+   * when Microsoft won't list them. Only an expired sign-in stops everything.
+   */
+  MicrosoftClient.prototype.listAttachments = async function (listId, taskId) {
+    var path = '/me/todo/lists/' + enc(listId) + '/tasks/' + enc(taskId) + '/attachments';
+    var tries = [GRAPH + path + '?$select=id,name,size,contentType', GRAPH + path, BETA + path];
+    var last = null, said = [];
+    for (var k = 0; k < tries.length; k++) {
+      try {
+        var files = await this.getAll(tries[k]);
+        return { files: files.map(function (a) { return { id: a.id, name: a.name, size: a.size, contentType: a.contentType }; }) };
+      } catch (e) {
+        if (signInExpired(e)) throw e;
+        last = e;
+        said.push(e.details || e.message);
+      }
+    }
+    return { files: [], error: last, details: said.join('\n') };
+  };
+
+  /** Download one attachment's bytes, trying each way Microsoft offers before giving up. */
   MicrosoftClient.prototype.downloadAttachment = async function (listId, taskId, attachmentId) {
     var path = '/me/todo/lists/' + enc(listId) + '/tasks/' + enc(taskId) + '/attachments/' + enc(attachmentId);
-    try { return await this.get(path + '/$value', 'bytes'); }
-    catch (e) {
-      if (e.code === 'ms_auth') throw e;
-      var a = await this.get(path);
-      if (a && a.contentBytes) return base64ToBytes(a.contentBytes);
-      throw e;
+    var bases = [GRAPH, BETA], last = null;
+    for (var k = 0; k < bases.length; k++) {
+      try { return await this.get(bases[k] + path + '/$value', 'bytes'); }
+      catch (e) { if (signInExpired(e)) throw e; last = e; }
+      try {
+        var a = await this.get(bases[k] + path);
+        if (a && a.contentBytes) return base64ToBytes(a.contentBytes);
+      } catch (e2) { if (signInExpired(e2)) throw e2; last = e2; }
     }
+    throw last || err('graph', 'Microsoft didn’t send the file.');
   };
 
   MicrosoftClient.SCOPES = SCOPES;
   MicrosoftClient.STORAGE_KEY = KEY;
-  MicrosoftClient._test = { b64url: b64url, pkceChallenge: pkceChallenge, friendlyAuthError: friendlyAuthError };
+  MicrosoftClient.signInExpired = signInExpired;
+  MicrosoftClient._test = { b64url: b64url, pkceChallenge: pkceChallenge, friendlyAuthError: friendlyAuthError, shortPath: shortPath };
   return MicrosoftClient;
 });

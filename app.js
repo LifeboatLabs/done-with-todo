@@ -249,6 +249,17 @@
       (bits.length > 1 ? bits.slice(0, -1).join(', ') + ' and ' + bits[bits.length - 1] : bits[0]) + '.';
     $('ov-empty').hidden = s.tasks > 0;
 
+    var heldBack = s.attachmentsUnavailable;
+    $('ov-att-warning').hidden = !heldBack;
+    if (heldBack) {
+      $('ov-att-text').textContent = 'Microsoft wouldn’t share the attached files on ' + plural(heldBack, 'task') +
+        ', so they can’t go in the backup. Everything else is fine. Open ' + (heldBack === 1 ? 'that task' : 'those tasks') +
+        ' in To Do and save the files by hand. The backup’s README lists ' + (heldBack === 1 ? 'it' : 'them') + '.';
+      $('ov-att-details').textContent = ((state.raw && state.raw.attachmentProblems) || []).map(function (p) {
+        return p.list + ' / ' + p.task + '\n' + p.details;
+      }).join('\n\n');
+    }
+
     if (!state.selected.size) {
       state.selected = new Set(m.lists.filter(function (l) { return l.wellknown !== 'flaggedEmails' && !state.moved.has(l.id); }).map(function (l) { return l.id; }));
     }
@@ -327,7 +338,7 @@
     status.classList.remove('status-error');
     setBusy(btn, true, 'Preparing your backup…');
     try {
-      var m = state.model, folder = backupFolder(), missing = [], extra = [];
+      var m = state.model, folder = backupFolder(), missing = [], extra = [], anyExpired = false;
       if (!$('opt-attachments-row').hidden && $('opt-attachments').checked) {
         var plan = core.attachmentPlan(m, folder);
         for (var i = 0; i < plan.length; i++) {
@@ -337,8 +348,9 @@
             var bytes = state.demo ? core.sampleAttachmentBytes(p.attachment) : await state.ms.downloadAttachment(p.list.id, p.task.id, p.attachment.id);
             extra.push({ path: p.path, data: bytes });
           } catch (e) {
-            var expired = e.code === 'ms_auth';
-            missing.push({ list: p.list.name, task: p.task.title, name: p.attachment.name, reason: expired ? 'Microsoft sign-in expired' : 'download failed' });
+            var expired = MicrosoftClient.signInExpired(e);
+            if (expired) anyExpired = true;
+            missing.push({ list: p.list.name, task: p.task.title, name: p.attachment.name, reason: expired ? 'Microsoft sign-in expired' : 'Microsoft didn’t send it' });
             if (expired) {
               for (var j = i + 1; j < plan.length; j++) missing.push({ list: plan[j].list.name, task: plan[j].task.title, name: plan[j].attachment.name, reason: 'Microsoft sign-in expired' });
               break;
@@ -351,7 +363,8 @@
       var blob = new Blob(Zip.makeZip(files), { type: 'application/zip' });
       saveBlob(blob, folder + '.zip');
       status.textContent = 'Saved “' + folder + '.zip” (' + formatBytes(blob.size) + ') to your downloads.' +
-        (missing.length ? ' ' + plural(missing.length, 'attached file') + ' couldn’t be downloaded. The README in the zip lists them; sign in again to retry.' : '');
+        (missing.length ? ' ' + plural(missing.length, 'attached file') + ' couldn’t be downloaded. The README in the zip lists them' +
+          (anyExpired ? '; sign in again to retry.' : '. Save them from To Do by hand.') : '');
       showThanks('backup-thanks');
     } catch (e) {
       status.textContent = 'Couldn’t make the backup: ' + e.message;

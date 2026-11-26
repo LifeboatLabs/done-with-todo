@@ -360,6 +360,71 @@ test('Graph: paging, $expand fallback, throttling, attachments', async () => {
   await assert.rejects(ms.get('https://evil.example/steal'), e => e.code === 'graph');
 });
 
+test('Graph: attachments Microsoft refuses don\'t block the backup; beta is tried; a real expiry still stops', async () => {
+  const calls = [];
+  const graph = async (url) => {
+    calls.push(url);
+    const p = decodeURIComponent(new URL(url).pathname);
+    if (p === '/v1.0/me') return response(200, { displayName: 'Lifeboat Labs', mail: 'lifeboatlabs@outlook.com' });
+    if (p === '/v1.0/me/todo/lists') return response(200, { value: [{ id: 'L1', displayName: 'Tasks' }] });
+    if (p === '/v1.0/me/todo/lists/L1/tasks') return response(200, { value: [
+      { id: 'T1', title: 'eat', status: 'notStarted', hasAttachments: true, checklistItems: [{ id: 'c1', displayName: 'breakfast' }] },
+      { id: 'T2', title: 'photo', status: 'notStarted', hasAttachments: true, checklistItems: [] }
+    ] });
+    // T1: every way of listing its files is refused, with a fresh sign-in
+    if (/^\/(v1\.0|beta)\/me\/todo\/lists\/L1\/tasks\/T1\/attachments$/.test(p)) return response(401, { error: { code: 'UnknownError', message: '' } });
+    // T2: v1.0 refuses; beta lists and downloads it
+    if (p === '/v1.0/me/todo/lists/L1/tasks/T2/attachments' || p.startsWith('/v1.0/me/todo/lists/L1/tasks/T2/attachments/')) return response(401, { error: { code: 'UnknownError' } });
+    if (p === '/beta/me/todo/lists/L1/tasks/T2/attachments') return response(200, { value: [{ id: 'F2', name: 'shot.png', size: 5, contentType: 'image/png' }] });
+    if (p === '/beta/me/todo/lists/L1/tasks/T2/attachments/F2/$value') return response(200, new Uint8Array([1, 2, 3]));
+    return response(404, { error: { code: 'NotFound', message: p } });
+  };
+  const ms = new MicrosoftClient({ clientId: 'x', redirectUri: 'https://a/', storage: memoryStorage(), fetch: graph, sleep: async () => {} });
+  ms.token = 'AT'; ms.tokenExpires = Date.now() + 3600e3;
+  const raw = await ms.readEverything();
+  const [t1, t2] = raw.rawTasksByList.L1;
+  assert.strictEqual(t1.attachmentsUnavailable, true);
+  assert.deepStrictEqual(t1.attachments, []);
+  assert.strictEqual(t2.attachments[0].name, 'shot.png');
+  assert.ok(!t2.attachmentsUnavailable);
+  assert.ok(calls.some(c => c.startsWith('https://graph.microsoft.com/beta/')), 'beta tried');
+  assert.strictEqual(raw.attachmentProblems.length, 1);
+  assert.strictEqual(raw.attachmentProblems[0].task, 'eat');
+  const said = raw.attachmentProblems[0].details;
+  assert.ok(said.includes('GET /v1.0/me/todo/lists/L1/tasks/T1/attachments?$select=id,name,size,contentType → 401\nUnknownError'), said);
+  assert.ok(said.includes('GET /beta/me/todo/lists/L1/tasks/T1/attachments → 401'), said);
+  assert.ok(!/: $/m.test(said), 'no dangling colon when Microsoft sends no message');
+  assert.deepStrictEqual(Array.from(await ms.downloadAttachment('L1', 'T2', 'F2')), [1, 2, 3]);
+
+  // What the person sees
+  const m = core.normalize(raw);
+  const eat = m.lists[0].tasks[0];
+  assert.strictEqual(eat.attachmentsUnavailable, true);
+  assert.strictEqual(eat.steps[0].title, 'breakfast', 'the rest of the task is intact');
+  assert.strictEqual(core.summarize(m).attachmentsUnavailable, 1);
+  assert.ok(/wouldn't share[\s\S]*- Tasks \/ eat/.test(core.backupReadme(m, [])), 'README lists the task');
+  assert.ok(core.toCSV(m).includes('Microsoft wouldn’t share'));
+  assert.ok(core.toPrintableHTML(m).includes('Microsoft wouldn’t share'));
+  assert.ok(core.googleTaskBody(eat).notes.includes('Save them from To Do'));
+
+  // A 401 after the sign-in's expiry time is still an expired sign-in, and stops the read
+  const late = new MicrosoftClient({ clientId: 'x', redirectUri: 'https://a/', storage: memoryStorage(), fetch: graph, sleep: async () => {} });
+  late.token = 'AT'; late.tokenExpires = Date.now() + 30e3; // inside the one-minute safety margin
+  await assert.rejects(late.readEverything(), e => e.code === 'ms_auth' && !e.fresh && /expired/.test(e.message));
+
+  // A 401 on the lists themselves with a fresh sign-in says so honestly, and names the request
+  const refuse = new MicrosoftClient({ clientId: 'x', redirectUri: 'https://a/', storage: memoryStorage(), sleep: async () => {},
+    fetch: async (url) => new URL(url).pathname === '/v1.0/me' ? response(200, {}) : response(401, { error: { code: 'UnknownError' } }) });
+  refuse.token = 'AT'; refuse.tokenExpires = Date.now() + 3600e3;
+  await assert.rejects(refuse.readEverything(), e => e.code === 'ms_auth' && e.fresh && !/expired/.test(e.message) &&
+    e.details.startsWith('GET /v1.0/me/todo/lists → 401') && MicrosoftClient.signInExpired(e) === false);
+});
+
+test('Graph addresses in technical details are short', () => {
+  const s = MicrosoftClient._test.shortPath('https://graph.microsoft.com/v1.0/me/todo/lists/AAMkADAwATM3ZmYAZS0yZjQ2LTk0ZWEtMDAyAi0wMAoALgAAA%3D%3D/tasks?$expand=checklistItems,linkedResources&$top=100');
+  assert.strictEqual(s, '/v1.0/me/todo/lists/…/tasks?$expand=checklistItems,linkedResources&$top=100');
+});
+
 // ------------------------------------------------------------------ Google Tasks transfer
 function fakeGoogle(options) {
   options = options || {};

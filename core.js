@@ -257,8 +257,19 @@
       attachments: (t.attachments || []).map(function (a) {
         return { id: a.id, name: a.name || 'attachment', size: +a.size || 0, contentType: a.contentType || 'application/octet-stream' };
       }),
-      hasAttachments: !!t.hasAttachments || !!(t.attachments && t.attachments.length)
+      hasAttachments: !!t.hasAttachments || !!(t.attachments && t.attachments.length),
+      // The task has files, but Microsoft wouldn't list them, so they can't be in the backup.
+      attachmentsUnavailable: !!t.attachmentsUnavailable
     };
+  }
+
+  var FILES_UNAVAILABLE = 'files Microsoft wouldn’t share, so save them from To Do';
+
+  /** What to show for a task's attached files: their names, plus a warning when Microsoft held them back. */
+  function attachmentNames(t) {
+    var names = t.attachments.map(function (a) { return a.name; });
+    if (t.attachmentsUnavailable) names.push('(' + FILES_UNAVAILABLE + ')');
+    return names;
   }
 
   /**
@@ -286,7 +297,7 @@
 
   /** Counts for the page. selected: optional Set of list ids to count. */
   core.summarize = function (model, selected) {
-    var s = { lists: 0, tasks: 0, open: 0, done: 0, steps: 0, repeating: 0, reminders: 0, important: 0, attachments: 0, attachmentBytes: 0 };
+    var s = { lists: 0, tasks: 0, open: 0, done: 0, steps: 0, repeating: 0, reminders: 0, important: 0, attachments: 0, attachmentBytes: 0, attachmentsUnavailable: 0 };
     (model.lists || []).forEach(function (l) {
       if (selected && !selected.has(l.id)) return;
       s.lists++;
@@ -299,6 +310,7 @@
         if (t.important) s.important++;
         s.attachments += t.attachments.length;
         t.attachments.forEach(function (a) { s.attachmentBytes += a.size; });
+        if (t.attachmentsUnavailable) s.attachmentsUnavailable++;
       });
     });
     return s;
@@ -350,7 +362,7 @@
           t.steps.map(function (s) { return (s.done ? '[x] ' : '[ ] ') + s.title; }).join('\n'),
           t.start || '', t.categories.join(', '),
           t.links.map(function (x) { return x.url; }).join('\n'),
-          t.attachments.map(function (a) { return a.name; }).join('\n'),
+          attachmentNames(t).join('\n'),
           isoToLocal(t.createdAt), t.done ? (t.completedDate || '') : ''
         ]);
       });
@@ -414,7 +426,8 @@
         return /^https?:\/\//i.test(x.url) ? '<a href="' + esc(x.url) + '">' + esc(x.name || x.url) + '</a>' : esc(x.url);
       }).join(' \u00b7 ') + '</span>';
     }
-    if (t.attachments.length) h += '<span class="meta">Attachments: ' + esc(t.attachments.map(function (a) { return a.name; }).join(', ')) + '</span>';
+    var files = attachmentNames(t);
+    if (files.length) h += '<span class="meta">Attachments: ' + esc(files.join(', ')) + '</span>';
     return h + '</li>';
   }
 
@@ -479,7 +492,7 @@
     if (t.reminder) lines.push('    > Reminder: ' + t.reminder);
     if (t.notes) t.notes.split('\n').forEach(function (line) { lines.push('    > ' + line); });
     t.links.forEach(function (x) { lines.push('    > Link: ' + x.url); });
-    t.attachments.forEach(function (a) { lines.push('    > Attachment: ' + a.name); });
+    attachmentNames(t).forEach(function (name) { lines.push('    > Attachment: ' + name); });
     return lines.join('\n');
   }
 
@@ -543,7 +556,7 @@
         if (t.modifiedAt) lines.push('LAST-MODIFIED:' + icsUTC(t.modifiedAt));
         lines.push('SUMMARY:' + icsText(t.title || '(untitled)'));
         var extra = [];
-        t.attachments.forEach(function (a) { extra.push('Attachment: ' + a.name); });
+        attachmentNames(t).forEach(function (name) { extra.push('Attachment: ' + name); });
         var desc = [t.notes].concat(extra).filter(Boolean).join('\n');
         if (desc) lines.push('DESCRIPTION:' + icsText(desc));
         var start = t.start || (t.recurrence && t.recurrence.rrule ? t.due : null);
@@ -610,6 +623,7 @@
     if (t.attachments.length) {
       extra.push('Attachments not copied (they are in your backup): ' + t.attachments.map(function (a) { return a.name; }).join(', '));
     }
+    if (t.attachmentsUnavailable) extra.push('This task has attached files that Microsoft wouldn’t share. Save them from To Do.');
     var footer = extra.length ? '\u2014 From Microsoft To Do \u2014\n' + extra.join('\n') : '';
     var notes = t.notes || '';
     var sep = notes && footer ? '\n\n' : '';
@@ -673,6 +687,16 @@
     if (missing && missing.length) {
       lines.push('Attachments that could not be downloaded', '----------------------------------------');
       missing.forEach(function (m) { lines.push('- ' + m.list + ' / ' + m.task + ' / ' + m.name + (m.reason ? ' (' + m.reason + ')' : '')); });
+      lines.push('');
+    }
+    var heldBack = [];
+    model.lists.forEach(function (l) {
+      l.tasks.forEach(function (t) { if (t.attachmentsUnavailable) heldBack.push('- ' + l.name + ' / ' + (t.title || 'Untitled task')); });
+    });
+    if (heldBack.length) {
+      lines.push('Tasks with attached files Microsoft wouldn\'t share', '-------------------------------------------------',
+        'Open these tasks in Microsoft To Do and save their files by hand before it closes:');
+      lines.push.apply(lines, heldBack);
       lines.push('');
     }
     lines.push('Done With To Do runs entirely in your browser. Your tasks were never sent to its makers.', '');
