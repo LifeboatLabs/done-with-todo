@@ -249,9 +249,10 @@
       (bits.length > 1 ? bits.slice(0, -1).join(', ') + ' and ' + bits[bits.length - 1] : bits[0]) + '.';
     $('ov-empty').hidden = s.tasks > 0;
 
-    var heldBack = s.attachmentsUnavailable;
-    $('ov-att-warning').hidden = !heldBack;
-    if (heldBack) {
+    // The box is new: a page saved by the browser before it existed won't have it.
+    var heldBack = s.attachmentsUnavailable, attBox = $('ov-att-warning');
+    if (attBox) attBox.hidden = !heldBack;
+    if (heldBack && attBox) {
       $('ov-att-text').textContent = 'Microsoft wouldn’t share the attached files on ' + plural(heldBack, 'task') +
         ', so they can’t go in the backup. Everything else is fine. Open ' + (heldBack === 1 ? 'that task' : 'those tasks') +
         ' in To Do and save the files by hand. The backup’s README lists ' + (heldBack === 1 ? 'it' : 'them') + '.';
@@ -487,7 +488,7 @@
     $('err-message').textContent = (e && e.message) || String(e);
     var details = e && e.details;
     $('err-details-box').hidden = !details;
-    $('err-details').textContent = details || '';
+    $('err-details').textContent = details ? details + '\nSite version ' + core.VERSION : '';
     show('error');
   }
 

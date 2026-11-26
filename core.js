@@ -18,6 +18,9 @@
   'use strict';
 
   var core = {};
+  // Shown in technical details, so a report says which version of the site the person had.
+  // Bump it together with the ?v= numbers in index.html and privacy.html.
+  core.VERSION = '2';
 
   // ---------------------------------------------------------------- errors
 
