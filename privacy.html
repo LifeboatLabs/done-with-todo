@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <meta name="color-scheme" content="light">
+  <title>Privacy: Done With To Do</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="config.js" defer></script>
+  <script src="privacy.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap header-row">
+      <a class="brand" href="./">
+        <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="10"/><path class="mark-door" d="M41 13H15v38h26"/><path class="mark-check" d="M22 33l8 8 22-22"/></svg>
+        <span>Done With To Do</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="wrap prose">
+    <h1>Privacy</h1>
+    <p class="muted">Last updated November 25, 2026.</p>
+
+    <p>Done With To Do is a free, open-source web page that copies your Microsoft To Do lists into Google Tasks or saves them as a backup. It's run by <span class="owner-name">the person who runs this copy of the site</span><span class="owner-contact" hidden> (<a class="owner-email" href="#"></a>)</span>.</p>
+
+    <h2>The short version</h2>
+    <ul class="plain-list">
+      <li>Your tasks go straight from Microsoft to your browser and, if you choose, straight from your browser to Google. They never pass through a server run by us, because there isn't one.</li>
+      <li>We don't collect, store, sell or share any of your data.</li>
+      <li>There are no cookies, analytics, ads or trackers.</li>
+    </ul>
+
+    <h2>What the page asks for, and why</h2>
+    <p><strong>From Microsoft, when you sign in:</strong></p>
+    <ul class="plain-list">
+      <li>Permission to read your tasks and task lists (<code>Tasks.Read</code>), so it can save or move them. It can't change or delete them.</li>
+      <li>Permission to sign you in and see your basic profile (<code>User.Read</code>, <code>openid</code>, <code>profile</code>), so the page can show whose lists these are.</li>
+    </ul>
+    <p><strong>From Google, only if you choose "Move to Google Tasks":</strong></p>
+    <ul class="plain-list">
+      <li>Access to Google Tasks (<code>https://www.googleapis.com/auth/tasks</code>). This is the only permission Google offers for adding tasks. The page uses it to read the names of your existing task lists, so new lists don't clash with them, and to create the lists and tasks you asked it to move. It never edits or deletes anything in Google Tasks.</li>
+    </ul>
+
+    <h2>Where your data goes</h2>
+    <ul class="plain-list">
+      <li>Sign-in tokens are kept in the page's memory. They disappear when you close or reload the tab, and they're only ever sent to Microsoft or Google.</li>
+      <li>During Microsoft sign-in, a random one-time code is kept in your browser's session storage for a few seconds, then deleted.</li>
+      <li>Backup files are made on your own computer and saved to your downloads. They aren't uploaded anywhere.</li>
+      <li>The page's security settings only allow it to connect to Microsoft and Google.</li>
+    </ul>
+
+    <h2>Google user data</h2>
+    <p>Done With To Do's use and transfer of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements. In practice:</p>
+    <ul class="plain-list">
+      <li>Google Tasks access is used only to create the lists and tasks you chose to move, and to read your list names to avoid clashes.</li>
+      <li>Your Google data isn't stored, sent to anyone else, used for advertising, or read by any person.</li>
+    </ul>
+
+    <h2>Other companies involved</h2>
+    <ul class="plain-list">
+      <li><strong>GitHub</strong> hosts the page's files. Like any web host, it may log technical details such as your IP address when you load the page. See <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub's privacy statement</a>.</li>
+      <li><strong>Microsoft</strong> and <strong>Google</strong> handle sign-in and provide your data under their own privacy policies.</li>
+      <li>Fonts are served from this site, not from a font service.</li>
+    </ul>
+
+    <h2>Removing access</h2>
+    <ul class="plain-list">
+      <li>Microsoft personal accounts: <a href="https://account.live.com/consent/Manage">account.live.com/consent/Manage</a>. Work or school accounts: <a href="https://myapps.microsoft.com/">myapps.microsoft.com</a>, or ask your IT team.</li>
+      <li>Google: <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.</li>
+    </ul>
+
+    <h2>Changes and contact</h2>
+    <p>If this page changes, the date at the top changes too<span class="source-sentence" hidden>, and every past version is public in the <a class="source-link" href="#">project's history on GitHub</a></span>. Questions? <span class="contact-sentence">Open an issue on the project's GitHub page.</span></p>
+
+    <p><a href="./">Back to Done With To Do</a></p>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap"><p>Done With To Do isn't made by, or affiliated with, Microsoft or Google.</p></div>
+  </footer>
+</body>
+</html>

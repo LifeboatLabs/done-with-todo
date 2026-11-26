@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; font-src 'self'; img-src 'self' data: blob:; connect-src https://login.microsoftonline.com https://graph.microsoft.com https://tasks.googleapis.com https://accounts.google.com/gsi/ https://oauth2.googleapis.com; frame-src https://accounts.google.com/gsi/; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <meta name="color-scheme" content="light">
+  <title>Done With To Do: take your Microsoft To Do lists with you</title>
+  <meta name="description" content="Microsoft To Do shuts down on June 30, 2027. Move your lists to Google Tasks or save a full backup. Free, open source, and it all happens in your browser.">
+  <meta property="og:title" content="Done With To Do">
+  <meta property="og:description" content="Microsoft To Do shuts down on June 30, 2027. Move your lists to Google Tasks or save a full backup. Free and open source.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="config.js" defer></script>
+  <script src="core.js" defer></script>
+  <script src="zip.js" defer></script>
+  <script src="microsoft.js" defer></script>
+  <script src="google.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to the main content</a>
+
+  <header class="site-header">
+    <div class="wrap header-row">
+      <a class="brand" href="./">
+        <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="10"/><path class="mark-door" d="M41 13H15v38h26"/><path class="mark-check" d="M22 33l8 8 22-22"/></svg>
+        <span>Done With To Do</span>
+      </a>
+      <nav class="header-links" aria-label="Project">
+        <a id="header-source" href="#" hidden>Source code</a>
+        <a id="header-donate" href="#" hidden>Leave a tip</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="wrap">
+    <noscript><p class="notice notice-stop">This page needs JavaScript to read your lists. Nothing is sent anywhere except straight to Microsoft or Google.</p></noscript>
+
+    <!-- Only the site owner sees this box, until the settings in config.js are filled in. -->
+    <aside id="setup" class="notice notice-caution setup" hidden aria-labelledby="setup-title">
+      <h2 id="setup-title">Setup mode</h2>
+      <p>This box is for the person setting up the site. It disappears once <code>config.js</code> has a Microsoft client ID.</p>
+      <dl class="setup-values">
+        <dt>Site address, for Microsoft (redirect URI)</dt>
+        <dd><code id="setup-address"></code> <button type="button" class="btn-small" data-copy="setup-address">Copy</button></dd>
+        <dt>Site origin, for Google (JavaScript origin)</dt>
+        <dd><code id="setup-origin"></code> <button type="button" class="btn-small" data-copy="setup-origin">Copy</button></dd>
+      </dl>
+      <ul class="setup-status">
+        <li id="setup-ms-status"></li>
+        <li id="setup-google-status"></li>
+        <li id="setup-donate-status"></li>
+      </ul>
+      <p id="setup-file-warning" hidden><strong>You opened this page as a file.</strong> Sign-in only works from the site's web address, such as https://yourname.github.io/done-with-todo/.</p>
+    </aside>
+
+    <!-- START -->
+    <section id="view-start" class="view" hidden aria-labelledby="start-title">
+      <div class="sign">
+        <svg class="sign-pictogram" viewBox="0 0 120 120" aria-hidden="true">
+          <path class="pict-door" d="M78 14H22v92h56"/>
+          <path class="pict-check" d="M38 64l16 16 50-50"/>
+        </svg>
+        <div class="sign-body">
+          <p class="sign-lead">Microsoft To Do shuts down on June 30, 2027.</p>
+          <h1 id="start-title" tabindex="-1">Take your lists with you.</h1>
+          <p class="sign-text">Move them to Google Tasks, or save a full backup you can open anywhere. It's free and open source, and it all happens in your browser.</p>
+          <div class="sign-actions">
+            <button type="button" id="signin-ms" class="btn btn-sign">Sign in with Microsoft</button>
+            <button type="button" id="try-demo" class="btn btn-sign-quiet">Try it with sample data</button>
+          </div>
+          <p class="sign-small" id="signin-note">Read-only: it can't change or delete anything in To Do.</p>
+        </div>
+      </div>
+
+      <ol class="route" aria-label="How it works">
+        <li><strong>Sign in with Microsoft</strong><span>Microsoft shows exactly what you're agreeing to share.</span></li>
+        <li><strong>Choose your lists</strong><span>See everything that was found, and pick what to take.</span></li>
+        <li><strong>Save or move</strong><span>Download a backup, or copy your lists into Google Tasks.</span></li>
+      </ol>
+
+      <section class="block" aria-labelledby="dest-title">
+        <h2 id="dest-title">Where your lists can go</h2>
+        <ul class="directions">
+          <li class="direction">
+            <span class="direction-arrow" aria-hidden="true"></span>
+            <div><h3>Google Tasks</h3><p>Lists, tasks, steps (as subtasks), notes and due dates. Repeats and reminders are written into each task's notes, because Google Tasks can't take them.</p></div>
+            <span class="direction-state" id="dest-google-state">Available</span>
+          </li>
+          <li class="direction">
+            <span class="direction-arrow" aria-hidden="true"></span>
+            <div><h3>A full backup</h3><p>A spreadsheet, a printable page, Markdown files for Obsidian, calendar files for other task apps, and the files attached to your tasks.</p></div>
+            <span class="direction-state">Available</span>
+          </li>
+          <li class="direction direction-later">
+            <span class="direction-arrow" aria-hidden="true"></span>
+            <div><h3>Apple Reminders</h3><p>Coming soon. Save a backup now and you'll be ready.</p></div>
+            <span class="direction-state">Coming soon</span>
+          </li>
+          <li class="direction direction-elsewhere">
+            <span class="direction-arrow" aria-hidden="true"></span>
+            <div><h3>Todoist or TickTick</h3><p>Both have their own importer built in. In the app, look for Import, then Microsoft To Do.</p></div>
+            <span class="direction-state">Use their importer</span>
+          </li>
+        </ul>
+      </section>
+
+      <section class="block" aria-labelledby="trust-title">
+        <h2 id="trust-title">What this site can see</h2>
+        <ul class="plain-list">
+          <li>With your permission, it reads your To Do lists and your name. Microsoft doesn't let it see anything else.</li>
+          <li>Everything happens in this browser tab. There's no server and no database, so your tasks never reach the people who made this.</li>
+          <li>If you choose Google Tasks, it can add lists and tasks to your Google account. It never deletes anything.</li>
+          <li>No ads, no tracking, no cookies. <a href="privacy.html">Read the privacy page</a><span class="source-sentence" hidden>, or <a id="trust-source" href="#">read the code</a></span>.</li>
+        </ul>
+      </section>
+
+      <section class="block" aria-labelledby="faq-title">
+        <h2 id="faq-title">Questions</h2>
+        <details><summary>Will this change anything in Microsoft To Do?</summary><p>No. It only asks Microsoft for permission to read. Your To Do lists stay exactly as they are until Microsoft closes the app.</p></details>
+        <details><summary>Why does Microsoft call this app "unverified"?</summary><p>Microsoft only gives its "verified" badge to registered companies. This is a free project made by an individual, so it shows as unverified. The code is public, so anyone can check what it does.</p></details>
+        <details><summary>What doesn't move to Google Tasks?</summary><p>Google Tasks has no repeats, reminders, importance or attachments. Those details are written into each task's notes, and kept in full in the backup. Microsoft doesn't share My Day or list groups with other apps, so nothing can copy those.</p></details>
+        <details><summary>Can I use a work or school account?</summary><p>Usually. Some organisations block apps they haven't approved. If yours does, Microsoft will say an administrator needs to approve it. Microsoft is moving work and school accounts to Planner.</p></details>
+        <details><summary>What about lists that other people share with me?</summary><p>They're included. The people on a shared list don't come along, so share the new list with them again in your new app.</p></details>
+        <details><summary>Is it really free?</summary><p>Yes, with no catch. If it helps you, a star on GitHub helps other people find it<span class="donate-sentence" hidden>, and a <a class="donate-link" href="#">tip</a> keeps it going</span>.</p></details>
+      </section>
+    </section>
+
+    <!-- LOADING -->
+    <section id="view-loading" class="view" hidden aria-labelledby="loading-title">
+      <div class="panel">
+        <h1 id="loading-title" tabindex="-1">Reading your lists</h1>
+        <p id="loading-detail" aria-live="polite">Connecting to Microsoft.</p>
+        <progress id="loading-bar" aria-labelledby="loading-title"></progress>
+        <p class="muted">Big accounts can take a minute or two. Nothing is being changed.</p>
+      </div>
+    </section>
+
+    <!-- OVERVIEW -->
+    <section id="view-overview" class="view" hidden aria-labelledby="overview-title">
+      <div class="overview-head">
+        <div>
+          <h1 id="overview-title" tabindex="-1">Here's what we found</h1>
+          <p id="ov-account" class="muted"></p>
+        </div>
+        <button type="button" id="start-over" class="btn btn-quiet">Start over</button>
+      </div>
+      <p id="ov-summary" class="summary"></p>
+      <p id="ov-empty" class="notice notice-caution" hidden>No tasks were found in this account. If you use To Do with a different Microsoft account, such as a work account, click Start over and choose that one.</p>
+
+      <section class="block" aria-labelledby="lists-title">
+        <div class="block-head">
+          <h2 id="lists-title">Your lists</h2>
+          <p class="inline-actions"><button type="button" id="ov-select-all" class="btn-link">Select all</button> <button type="button" id="ov-select-none" class="btn-link">Select none</button></p>
+        </div>
+        <div class="table-scroll">
+          <table class="lists">
+            <thead><tr><th scope="col"><span class="visually-hidden">Include</span></th><th scope="col">List</th><th scope="col" class="num">Open</th><th scope="col" class="num">Done</th></tr></thead>
+            <tbody id="ov-lists"></tbody>
+          </table>
+        </div>
+        <p class="muted small">The backup always includes every list. Your choices here decide what moves to Google Tasks.</p>
+      </section>
+
+      <div class="destinations">
+        <section class="dest dest-backup" aria-labelledby="backup-title">
+          <h2 id="backup-title">Save a full backup</h2>
+          <p>One zip file with a spreadsheet, a printable page, Markdown for Obsidian, calendar files for other task apps<span id="backup-att-phrase">, and your attachments</span>.</p>
+          <label class="check" id="opt-attachments-row"><input type="checkbox" id="opt-attachments" checked> <span id="opt-attachments-label">Include attachments</span></label>
+          <p class="actions">
+            <button type="button" id="backup-zip" class="btn btn-go">Download backup (.zip)</button>
+          </p>
+          <p class="actions-secondary">
+            <button type="button" id="backup-print" class="btn-link">Open a printable page</button>
+            <button type="button" id="backup-csv" class="btn-link">Download just the spreadsheet</button>
+          </p>
+          <p id="backup-status" class="status" aria-live="polite"></p>
+          <div id="backup-thanks" class="thanks" hidden></div>
+        </section>
+
+        <section class="dest dest-google" aria-labelledby="google-title">
+          <h2 id="google-title">Move to Google Tasks</h2>
+          <p>Each list you picked becomes a new list in Google Tasks. Steps become subtasks. Repeats, reminders and importance go into each task's notes.</p>
+          <label class="check"><input type="checkbox" id="opt-completed"> <span>Copy completed tasks too</span></label>
+          <p class="actions">
+            <button type="button" id="google-move" class="btn btn-go">Move to Google Tasks</button>
+          </p>
+          <p id="google-estimate" class="muted small"></p>
+          <p id="google-status" class="status" aria-live="polite"></p>
+        </section>
+      </div>
+
+      <section class="block" aria-labelledby="other-title">
+        <h2 id="other-title">Somewhere else?</h2>
+        <ul class="plain-list">
+          <li><strong>Apple Reminders:</strong> coming soon. Save the backup now and you'll be ready.</li>
+          <li><strong>Todoist or TickTick:</strong> both have an importer built in. Look for Import, then Microsoft To Do.</li>
+          <li><strong>Obsidian, Thunderbird, Nextcloud and other apps:</strong> use the Markdown or calendar files in the backup.</li>
+        </ul>
+      </section>
+    </section>
+
+    <!-- GOOGLE TRANSFER -->
+    <section id="view-google" class="view" hidden aria-labelledby="g-title">
+      <div class="panel" id="g-running">
+        <h1 id="g-title" tabindex="-1">Copying to Google Tasks</h1>
+        <p id="g-detail" aria-live="polite">Starting.</p>
+        <progress id="g-bar" value="0" max="1" aria-labelledby="g-title"></progress>
+        <p class="muted">Keep this tab open until it finishes. Your To Do lists aren't touched.</p>
+      </div>
+
+      <div class="panel" id="g-paused" hidden>
+        <h1 tabindex="-1">Paused</h1>
+        <p id="g-paused-msg"></p>
+        <p class="muted">Everything copied so far is safe in Google Tasks. Continue picks up where it stopped, without making duplicates.</p>
+        <p class="actions"><button type="button" id="g-continue" class="btn btn-go">Continue</button> <button type="button" id="g-stop" class="btn btn-quiet">Back to my lists</button></p>
+      </div>
+
+      <div id="g-done" hidden>
+        <div class="sign sign-done">
+          <svg class="sign-pictogram" viewBox="0 0 120 120" aria-hidden="true">
+            <path class="pict-door" d="M78 14H22v92h56"/>
+            <path class="pict-check pict-check-draw" d="M38 64l16 16 50-50"/>
+          </svg>
+          <div class="sign-body">
+            <h1 id="g-done-title" tabindex="-1">Done. Your lists are in Google Tasks.</h1>
+            <p class="sign-text" id="g-done-summary"></p>
+            <div class="sign-actions">
+              <a id="g-open" class="btn btn-sign" href="https://tasks.google.com/" target="_blank" rel="noopener">Open Google Tasks</a>
+              <button type="button" id="g-back" class="btn btn-sign-quiet">Back to my lists</button>
+            </div>
+          </div>
+        </div>
+        <section class="block" aria-labelledby="g-notes-title">
+          <h2 id="g-notes-title">Good to know</h2>
+          <ul class="plain-list" id="g-done-notes"></ul>
+          <details id="g-failures" hidden><summary id="g-failures-summary"></summary><ul id="g-failures-list" class="plain-list small"></ul></details>
+        </section>
+        <div id="g-thanks" class="thanks" hidden></div>
+      </div>
+    </section>
+
+    <!-- ERROR -->
+    <section id="view-error" class="view" hidden aria-labelledby="err-title">
+      <div class="notice notice-stop">
+        <h1 id="err-title" tabindex="-1">Something went wrong</h1>
+        <p id="err-message"></p>
+        <details id="err-details-box" hidden><summary>Technical details</summary><pre id="err-details"></pre></details>
+        <p class="actions"><button type="button" id="err-retry" class="btn btn-go">Try again</button></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>Done With To Do is free and open source. It isn't made by, or affiliated with, Microsoft or Google. Microsoft To Do is a trademark of Microsoft.</p>
+      <p class="footer-links"><a href="privacy.html">Privacy</a> <a id="footer-source" href="#" hidden>Source code</a> <a id="footer-donate" href="#" hidden>Leave a tip</a></p>
+    </div>
+  </footer>
+</body>
+</html>
