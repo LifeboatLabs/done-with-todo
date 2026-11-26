@@ -19,6 +19,9 @@
   // support varies between account types.
   var BETA = 'https://graph.microsoft.com/beta';
   var SCOPES = 'openid profile User.Read Tasks.Read';
+  // Asked for only when someone chooses to include attached files: Microsoft refuses to list
+  // attachments on personal accounts with read-only access. The site still only ever reads.
+  var FILE_SCOPES = 'openid profile User.Read Tasks.ReadWrite';
   var KEY = 'dwtd.microsoft.signin';
 
   function core() { return root.DWTD.core; }
@@ -121,6 +124,7 @@
     this.fetch = opts.fetch || root.fetch.bind(root);
     this.sleep = opts.sleep || function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
     this.storage = opts.storage || root.sessionStorage;
+    this.scopes = opts.scopes || SCOPES;
   }
 
   MicrosoftClient.prototype.loginBase = function () {
@@ -133,7 +137,7 @@
     this.storage.setItem(KEY, JSON.stringify({ v: verifier, s: state, t: Date.now() }));
     var q = new URLSearchParams({
       client_id: this.clientId, response_type: 'code', redirect_uri: this.redirectUri,
-      response_mode: 'fragment', scope: SCOPES, state: state,
+      response_mode: 'fragment', scope: this.scopes, state: state,
       code_challenge: await pkceChallenge(verifier), code_challenge_method: 'S256', prompt: 'select_account'
     });
     return this.loginBase() + 'authorize?' + q.toString();
@@ -155,7 +159,7 @@
     }
     var body = new URLSearchParams({
       client_id: this.clientId, grant_type: 'authorization_code', code: params.get('code'),
-      redirect_uri: this.redirectUri, code_verifier: saved.v, scope: SCOPES
+      redirect_uri: this.redirectUri, code_verifier: saved.v, scope: this.scopes
     });
     var res, data;
     try {
@@ -304,6 +308,7 @@
   };
 
   MicrosoftClient.SCOPES = SCOPES;
+  MicrosoftClient.FILE_SCOPES = FILE_SCOPES;
   MicrosoftClient.STORAGE_KEY = KEY;
   MicrosoftClient.signInExpired = signInExpired;
   MicrosoftClient._test = { b64url: b64url, pkceChallenge: pkceChallenge, friendlyAuthError: friendlyAuthError, shortPath: shortPath };

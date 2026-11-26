@@ -420,6 +420,37 @@ test('Graph: attachments Microsoft refuses don\'t block the backup; beta is trie
     e.details.startsWith('GET /v1.0/me/todo/lists → 401') && MicrosoftClient.signInExpired(e) === false);
 });
 
+test('Opting in to attached files asks for Tasks.ReadWrite, but the site still only sends GETs to Graph', async () => {
+  const storage = memoryStorage();
+  let tokenBody = null;
+  const methods = [];
+  const ms = new MicrosoftClient({
+    clientId: 'x', redirectUri: 'https://a/', storage, scopes: MicrosoftClient.FILE_SCOPES, sleep: async () => {},
+    fetch: async (url, init) => {
+      if (url.startsWith('https://login.microsoftonline.com/')) { tokenBody = new URLSearchParams(init.body); return response(200, { access_token: 'AT', expires_in: 3600 }); }
+      methods.push((init && init.method) || 'GET');
+      const p = decodeURIComponent(new URL(url).pathname);
+      if (p === '/v1.0/me') return response(200, { displayName: 'Sam' });
+      if (p === '/v1.0/me/todo/lists') return response(200, { value: [{ id: 'L', displayName: 'Tasks' }] });
+      if (p === '/v1.0/me/todo/lists/L/tasks') return response(200, { value: [{ id: 'T', title: 'eat', hasAttachments: true, checklistItems: [] }] });
+      if (p === '/v1.0/me/todo/lists/L/tasks/T/attachments') return response(200, { value: [{ id: 'F', name: 'shot.png', size: 3, contentType: 'image/png' }] });
+      if (p === '/v1.0/me/todo/lists/L/tasks/T/attachments/F/$value') return response(200, new Uint8Array([7, 8, 9]));
+      return response(404, {});
+    }
+  });
+  const url = new URL(await ms.signInUrl());
+  assert.strictEqual(url.searchParams.get('scope'), 'openid profile User.Read Tasks.ReadWrite');
+  await ms.completeSignIn('#code=c&state=' + url.searchParams.get('state'));
+  assert.strictEqual(tokenBody.get('scope'), 'openid profile User.Read Tasks.ReadWrite');
+  const raw = await ms.readEverything();
+  assert.strictEqual(raw.rawTasksByList.L[0].attachments[0].name, 'shot.png');
+  assert.deepStrictEqual(Array.from(await ms.downloadAttachment('L', 'T', 'F')), [7, 8, 9]);
+  assert.ok(methods.length >= 5 && methods.every(m => m === 'GET'), 'only reads: ' + methods.join(','));
+  // and the default stays read-only
+  const plain = new MicrosoftClient({ clientId: 'x', redirectUri: 'https://a/', storage: memoryStorage() });
+  assert.strictEqual(new URL(await plain.signInUrl()).searchParams.get('scope'), 'openid profile User.Read Tasks.Read');
+});
+
 test('Graph addresses in technical details are short', () => {
   const s = MicrosoftClient._test.shortPath('https://graph.microsoft.com/v1.0/me/todo/lists/AAMkADAwATM3ZmYAZS0yZjQ2LTk0ZWEtMDAyAi0wMAoALgAAA%3D%3D/tasks?$expand=checklistItems,linkedResources&$top=100');
   assert.strictEqual(s, '/v1.0/me/todo/lists/…/tasks?$expand=checklistItems,linkedResources&$top=100');

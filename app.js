@@ -24,6 +24,13 @@
   } catch (e) { testers = /[?&]testers\b/.test(location.search); }
   var gIdOk = GOOGLE_ID.test(gId);
   var gOk = gIdOk && (cfg.googleForEveryone !== false || testers);
+  // Signing in with ?files asks Microsoft for the extra permission it requires before it shares
+  // attached files. Remembered for this tab, because the return from Microsoft drops the query.
+  var wantFiles = false;
+  try {
+    if (/[?&]files\b/.test(location.search)) sessionStorage.setItem('dwtd.files', '1');
+    wantFiles = sessionStorage.getItem('dwtd.files') === '1';
+  } catch (e) { wantFiles = /[?&]files\b/.test(location.search); }
 
   var state = {
     ms: null, google: null, raw: null, model: null, demo: false,
@@ -528,7 +535,8 @@
     wire();
     renderSetup();
     renderLinks();
-    if (msOk) state.ms = new MicrosoftClient({ clientId: msId, authority: cfg.microsoftAuthority || 'common', redirectUri: siteAddress() });
+    if (msOk) state.ms = new MicrosoftClient({ clientId: msId, authority: cfg.microsoftAuthority || 'common', redirectUri: siteAddress(),
+      scopes: wantFiles ? MicrosoftClient.FILE_SCOPES : MicrosoftClient.SCOPES });
     if (/[?&]demo\b/.test(location.search)) return startDemo();
     if (state.ms && /(^#|&)(code|error)=/.test(location.hash)) {
       show('loading');
